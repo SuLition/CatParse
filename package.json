@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "build:backend": "cd parser-service && python build_exe.py",
+    "build:all": "npm run build:backend && npm run tauri:build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",

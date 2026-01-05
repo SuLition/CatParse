@@ -474,11 +474,25 @@ async def proxy_doubao(request: ProxyRequest):
 # ==================== 主程序 ====================
 
 if __name__ == "__main__":
+    import sys
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="127.0.0.1",
-        port=3721,
-        reload=False,
-        log_level="info"
-    )
+    
+    # 检测是否是 PyInstaller 打包后的环境
+    if getattr(sys, 'frozen', False):
+        # 生产环境（打包后）：直接传入 app 对象
+        uvicorn.run(
+            app,
+            host="127.0.0.1",
+            port=3721,
+            reload=False,
+            log_level="info"
+        )
+    else:
+        # 开发环境：使用字符串导入，支持热重载
+        uvicorn.run(
+            "main:app",
+            host="127.0.0.1",
+            port=3721,
+            reload=False,
+            log_level="info"
+        )

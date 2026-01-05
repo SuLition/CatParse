@@ -457,14 +457,35 @@ fn start_backend_service(app_handle: &tauri::AppHandle) {
         });
     } else {
         // 生产环境：使用 backend_server.exe
-        let backend_exe = exe_dir.join("backend_server.exe");
+        // 优先从资源目录查找，然后从 exe 目录查找
+        let resource_dir = match app_handle.path().resource_dir() {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("[后端服务] 获取资源目录失败: {}", e);
+                return;
+            }
+        };
         
-        if !backend_exe.exists() {
-            eprintln!("[后端服务] backend_server.exe 不存在: {:?}", backend_exe);
-            return;
-        }
+        // 尝试多个可能的路径
+        let possible_paths = vec![
+            exe_dir.join("binaries").join("backend_server.exe"),  // NSIS 安装目录
+            resource_dir.join("binaries").join("backend_server.exe"),
+            resource_dir.join("backend_server.exe"),
+            exe_dir.join("backend_server.exe"),
+        ];
         
-        let exe_dir_clone = exe_dir.clone();
+        let backend_exe = match possible_paths.iter().find(|p| p.exists()) {
+            Some(p) => p.clone(),
+            None => {
+                eprintln!("[后端服务] backend_server.exe 未找到，已搜索路径:");
+                for p in &possible_paths {
+                    eprintln!("  - {:?}", p);
+                }
+                return;
+            }
+        };
+        
+        let working_dir = backend_exe.parent().unwrap_or(&exe_dir).to_path_buf();
         std::thread::spawn(move || {
             println!("[后端服务] 启动服务: {:?}", backend_exe);
             
@@ -473,7 +494,7 @@ fn start_backend_service(app_handle: &tauri::AppHandle) {
                 use std::os::windows::process::CommandExt;
                 const CREATE_NO_WINDOW: u32 = 0x08000000;
                 Command::new(&backend_exe)
-                    .current_dir(&exe_dir_clone)
+                    .current_dir(&working_dir)
                     .creation_flags(CREATE_NO_WINDOW)
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())
@@ -482,7 +503,7 @@ fn start_backend_service(app_handle: &tauri::AppHandle) {
             
             #[cfg(not(target_os = "windows"))]
             let child_result = Command::new(&backend_exe)
-                .current_dir(&exe_dir_clone)
+                .current_dir(&working_dir)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .spawn();
@@ -517,14 +538,35 @@ fn start_backend_service(app_handle: &tauri::AppHandle) {
 fn stop_backend_service() {
     let mut service = BACKEND_SERVICE.lock().unwrap();
     if let Some(mut child) = service.take() {
+        println!("[后端服务] 正在停止服务...");
+        
+        // 尝试正常终止
         let _ = child.kill();
-        log::info!("[后端服务] 服务已停止");
+        
+        // 等待进程结束
+        match child.wait() {
+            Ok(status) => println!("[后端服务] 服务已停止，退出码: {:?}", status),
+            Err(e) => eprintln!("[后端服务] 等待进程结束失败: {}", e),
+        }
+        
+        // Windows 上额外确保进程被终止
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            use std::process::Command as StdCommand;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            // 使用 taskkill 强制终止（隐藏窗口）
+            let _ = StdCommand::new("taskkill")
+                .args(["/F", "/IM", "backend_server.exe"])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output();
+        }
     }
 }
 
 /// 手动启动后端服务（前端调用）
 #[tauri::command]
-async fn start_backend() -> Result<String, String> {
+async fn start_backend(app: tauri::AppHandle) -> Result<String, String> {
     // 检查服务是否已运行
     if std::net::TcpStream::connect_timeout(
         &"127.0.0.1:3721".parse().unwrap(),
@@ -570,18 +612,32 @@ async fn start_backend() -> Result<String, String> {
         }
     } else {
         // 生产环境：使用 backend_server.exe
-        let backend_exe = exe_dir.join("backend_server.exe");
+        let resource_dir = app.path().resource_dir()
+            .map_err(|e| format!("获取资源目录失败: {}", e))?;
         
-        if !backend_exe.exists() {
-            return Err(format!("后端服务文件不存在: {:?}", backend_exe));
-        }
+        // 尝试多个可能的路径
+        let possible_paths = vec![
+            exe_dir.join("binaries").join("backend_server.exe"),  // NSIS 安装目录
+            resource_dir.join("binaries").join("backend_server.exe"),
+            resource_dir.join("backend_server.exe"),
+            exe_dir.join("backend_server.exe"),
+        ];
+        
+        let backend_exe = possible_paths.iter().find(|p| p.exists())
+            .ok_or_else(|| {
+                let paths: Vec<String> = possible_paths.iter().map(|p| format!("{:?}", p)).collect();
+                format!("后端服务文件未找到，已搜索: {}", paths.join(", "))
+            })?
+            .clone();
+        
+        let working_dir = backend_exe.parent().unwrap_or(&exe_dir).to_path_buf();
         
         #[cfg(target_os = "windows")]
         let child_result = {
             use std::os::windows::process::CommandExt;
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             Command::new(&backend_exe)
-                .current_dir(&exe_dir)
+                .current_dir(&working_dir)
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
@@ -590,7 +646,7 @@ async fn start_backend() -> Result<String, String> {
         
         #[cfg(not(target_os = "windows"))]
         let child_result = Command::new(&backend_exe)
-            .current_dir(&exe_dir)
+            .current_dir(&working_dir)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();
@@ -626,9 +682,25 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Destroyed = event {
-                // 窗口关闭时停止服务
-                stop_backend_service();
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // 阻止立即关闭
+                api.prevent_close();
+                
+                // 发送关闭中事件到前端
+                let _ = window.emit("app-closing", ());
+                
+                // 在后台线程停止服务并关闭窗口
+                let window_clone = window.clone();
+                std::thread::spawn(move || {
+                    // 停止后端服务
+                    stop_backend_service();
+                    
+                    // 稍微延迟确保前端收到事件
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    
+                    // 关闭窗口
+                    let _ = window_clone.destroy();
+                });
             }
         })
         .invoke_handler(tauri::generate_handler![
