@@ -73,6 +73,10 @@ function startBackendPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), startBackendPlugin()]
+  plugins: [vue(), startBackendPlugin()],
+  server: {
+    port: 15173,  // 使用高位端口避免冲突
+    strictPort: true
+  },
   // 注意：代理配置已移除，所有跨域请求统一通过 parser-service 处理
 })

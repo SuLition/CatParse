@@ -1,8 +1,10 @@
 import { createApp } from 'vue'
-import naive from 'naive-ui'
 import './style.css'
 import App from './App.vue'
 
 const app = createApp(App)
-app.use(naive)
 app.mount('#app')
+
+// Vue 挂载完成后显示窗口
+import { getCurrentWindow } from '@tauri-apps/api/window'
+getCurrentWindow().show()

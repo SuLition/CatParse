@@ -5,19 +5,21 @@
   "identifier": "com.douyintools.app",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173",
+    "devUrl": "http://localhost:15173",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build"
   },
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "姜导工具箱",
         "width": 1400,
         "height": 800,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "visible": false
       }
     ],
     "security": {
