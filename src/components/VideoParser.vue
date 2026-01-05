@@ -115,22 +115,6 @@
     <Transition name="toast">
       <div class="toast" v-if="toast">{{ toast }}</div>
     </Transition>
-    
-    <!-- 进度条 -->
-    <Transition name="progress">
-      <div class="progress-overlay" v-if="progressInfo.visible">
-        <div class="progress-modal">
-          <div class="progress-title">{{ progressInfo.title }}</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar" :style="{ width: progressInfo.progress + '%' }"></div>
-          </div>
-          <div class="progress-info">
-            <span class="progress-status">{{ progressInfo.status }}</span>
-            <span class="progress-percent">{{ progressInfo.progress }}%</span>
-          </div>
-        </div>
-      </div>
-    </Transition>
 
     <!-- Settings Modal -->
     <SettingsModal 
@@ -156,6 +140,7 @@ import {
   getPlatformById,
   PlatformStatus 
 } from '../config/platforms.js'
+import { addTask, updateTask, completeTask, TaskType } from '../stores/taskStore.js'
 
 // 子组件
 import AppHeader from './common/AppHeader.vue'
@@ -191,36 +176,8 @@ const comingSoonPlatforms = getComingSoonPlatforms()
 // 当前选中的平台配置
 const currentPlatform = computed(() => getPlatformById(selectedPlatform.value))
 
-// 进度状态
-const progressInfo = ref({
-  visible: false,
-  type: '', // 'parse' | 'download' | 'extract'
-  title: '',
-  progress: 0, // 0-100
-  status: '' // 状态文字
-})
-
-// 显示进度
-const showProgress = (type, title, progress = 0, status = '') => {
-  progressInfo.value = {
-    visible: true,
-    type,
-    title,
-    progress,
-    status
-  }
-}
-
-// 更新进度
-const updateProgress = (progress, status = '') => {
-  progressInfo.value.progress = progress
-  if (status) progressInfo.value.status = status
-}
-
-// 隐藏进度
-const hideProgress = () => {
-  progressInfo.value.visible = false
-}
+// 当前任务ID（用于跟踪当前进行的任务）
+let currentTaskId = null
 
 // 平台切换时清空视频信息
 watch(selectedPlatform, () => {
@@ -382,7 +339,9 @@ const parseVideo = async () => {
   
   loading.value = true
   videoInfo.value = null
-  showProgress('parse', '解析中', 10, `正在解析 ${platform.name} 链接...`)
+  
+  // 创建解析任务
+  currentTaskId = addTask(TaskType.PARSE, `${platform.name} 解析`, { statusText: '正在解析...' })
 
   try {
     // 根据平台调用不同的解析函数
@@ -397,26 +356,28 @@ const parseVideo = async () => {
     }
     
     loading.value = false
-    updateProgress(100, '解析完成')
-    setTimeout(hideProgress, 500)
+    updateTask(currentTaskId, { progress: 100, statusText: '解析完成' })
+    completeTask(currentTaskId, true)
+    currentTaskId = null
     showToast('解析成功！')
     
   } catch (error) {
     console.error('解析失败:', error)
     loading.value = false
-    hideProgress()
+    completeTask(currentTaskId, false, error.message)
+    currentTaskId = null
     showToast(`解析失败: ${error.message}`)
   }
 }
 
 // 解析B站视频 - 使用 B 站官方 API + WBI 签名
 const parseBilibiliVideo = async () => {
-  updateProgress(20, '正在获取视频信息...')
+  updateTask(currentTaskId, { progress: 20, statusText: '正在获取视频信息...' })
   
   // 使用新的 B 站 API 解析
   const { videoInfo: data, playData } = await parseBilibiliVideoApi(videoUrl.value)
   
-  updateProgress(60, '正在解析视频流...')
+  updateTask(currentTaskId, { progress: 60, statusText: '正在解析视频流...' })
   
   const formatPubDate = (timestamp) => {
     if (!timestamp) return '未知'
@@ -532,35 +493,35 @@ const parseBilibiliVideo = async () => {
   
   // 视频流解析完成后，一次性设置 videoInfo
   videoInfo.value = biliInfo
-  updateProgress(90, '解析完成')
+  updateTask(currentTaskId, { progress: 90, statusText: '解析完成' })
 }
 
 // 解析抖音视频
 const parseDouyinVideo = async () => {
-  updateProgress(20, '正在获取视频信息...')
+  updateTask(currentTaskId, { progress: 20, statusText: '正在获取视频信息...' })
   
   // 调用抖音解析服务
   const data = await parseDouyinVideoApi(videoUrl.value)
   
-  updateProgress(80, '正在处理视频数据...')
+  updateTask(currentTaskId, { progress: 80, statusText: '正在处理视频数据...' })
   
   // 设置视频信息
   videoInfo.value = data
-  updateProgress(90, '解析完成')
+  updateTask(currentTaskId, { progress: 90, statusText: '解析完成' })
 }
 
 // 解析小红书视频
 const parseXiaohongshuVideo = async () => {
-  updateProgress(20, '正在获取笔记信息...')
+  updateTask(currentTaskId, { progress: 20, statusText: '正在获取笔记信息...' })
   
   // 调用小红书解析服务
   const data = await parseXiaohongshuVideoApi(videoUrl.value)
   
-  updateProgress(80, '正在处理笔记数据...')
+  updateTask(currentTaskId, { progress: 80, statusText: '正在处理笔记数据...' })
   
   // 设置视频信息
   videoInfo.value = data
-  updateProgress(90, '解析完成')
+  updateTask(currentTaskId, { progress: 90, statusText: '解析完成' })
 }
 
 // 下载视频
@@ -571,13 +532,17 @@ const downloadVideo = async (quality) => {
   }
   
   downloadingType.value = quality
-  showProgress('download', '下载中', 0, '正在连接...')
+  
+  // 获取文件名
+  const fileName = (videoInfo.value.title || 'video').replace(/[\\/:*?"<>|]/g, '_')
+  
+  // 创建下载任务
+  const downloadTaskId = addTask(TaskType.DOWNLOAD, `下载: ${fileName.slice(0, 20)}...`, { statusText: '正在连接...' })
   
   try {
     if (videoInfo.value.platform === 'bilibili') {
       let downloadUrl = ''
       let backupUrls = []
-      let fileName = (videoInfo.value.title || 'video').replace(/[\\/:*?"<>|]/g, '_')
       
       if (typeof quality === 'object') {
         if (quality.type === 'bilibili-video' && quality.stream) {
@@ -585,77 +550,72 @@ const downloadVideo = async (quality) => {
           // 获取备用链接
           backupUrls = quality.stream.backupUrl || []
           downloadingType.value = `bilibili-${quality.stream.id}`
-          fileName += `_${quality.stream.short}.mp4`
         }
       }
       
       if (downloadUrl) {
-        await downloadBilibili(downloadUrl, fileName, (progress, status) => {
-          updateProgress(progress, status)
+        await downloadBilibili(downloadUrl, fileName + `_${quality.stream.short}.mp4`, (progress, status) => {
+          updateTask(downloadTaskId, { progress, statusText: status })
         }, { backupUrls })
-        setTimeout(hideProgress, 500)
+        completeTask(downloadTaskId, true)
         showToast('下载完成')
       } else {
-        hideProgress()
+        completeTask(downloadTaskId, false, '未获取到下载链接')
         showToast('未获取到下载链接')
       }
     } else if (videoInfo.value.platform === 'douyin') {
       // 抖音视频下载
       let downloadUrl = ''
       let backupUrls = []
-      let fileName = (videoInfo.value.title || 'video').replace(/[\\/:*?"<>|]/g, '_')
       
       if (typeof quality === 'object') {
         if (quality.type === 'douyin-video' && quality.stream) {
           downloadUrl = quality.stream.url
           backupUrls = quality.stream.backupUrls || []
           downloadingType.value = `douyin-${quality.stream.id}`
-          fileName += `_${quality.stream.short}.mp4`
         }
       }
       
       if (downloadUrl) {
-        await downloadDouyin(downloadUrl, fileName, (progress, status) => {
-          updateProgress(progress, status)
+        await downloadDouyin(downloadUrl, fileName + `_${quality.stream.short}.mp4`, (progress, status) => {
+          updateTask(downloadTaskId, { progress, statusText: status })
         }, { backupUrls })
-        setTimeout(hideProgress, 500)
+        completeTask(downloadTaskId, true)
         showToast('下载完成')
       } else {
-        hideProgress()
+        completeTask(downloadTaskId, false, '未获取到下载链接')
         showToast('未获取到下载链接')
       }
     } else if (videoInfo.value.platform === 'xiaohongshu') {
       // 小红书视频下载
       let downloadUrl = ''
       let backupUrls = []
-      let fileName = (videoInfo.value.title || 'video').replace(/[\\/:*?"<>|]/g, '_')
       
       if (typeof quality === 'object') {
         if (quality.type === 'xiaohongshu-video' && quality.stream) {
           downloadUrl = quality.stream.url
           backupUrls = quality.stream.backupUrls || []
           downloadingType.value = `xiaohongshu-${quality.stream.id}`
-          fileName += `_${quality.stream.short}.mp4`
         }
       }
       
       if (downloadUrl) {
-        await downloadXiaohongshu(downloadUrl, fileName, (progress, status) => {
-          updateProgress(progress, status)
+        await downloadXiaohongshu(downloadUrl, fileName + `_${quality.stream.short}.mp4`, (progress, status) => {
+          updateTask(downloadTaskId, { progress, statusText: status })
         }, { backupUrls })
-        setTimeout(hideProgress, 500)
+        completeTask(downloadTaskId, true)
         showToast('下载完成')
       } else {
-        hideProgress()
+        completeTask(downloadTaskId, false, '未获取到下载链接')
         showToast('未获取到下载链接')
       }
     } else {
-      hideProgress()
+      completeTask(downloadTaskId, false, '平台不支持')
       showToast('该平台视频下载服务开发中')
     }
   } catch (error) {
     console.error('下载失败:', error)
-    hideProgress()
+    completeTask(downloadTaskId, false, error.message)
     showToast('下载失败，请重试')
   } finally {
     downloadingType.value = ''
@@ -670,7 +630,9 @@ const extractTranscript = async () => {
   
   extracting.value = true
   transcript.value = ''
-  showProgress('extract', '文案提取', 0, '正在准备...')
+  
+  // 创建识别任务
+  const extractTaskId = addTask(TaskType.EXTRACT, '文案提取', { statusText: '正在准备...' })
   
   try {
     let result = ''
@@ -697,12 +659,12 @@ const extractTranscript = async () => {
         throw new Error('未获取到B站音频链接')
       }
       
-      updateProgress(5, '正在下载音频...')
+      updateTask(extractTaskId, { progress: 5, statusText: '正在下载音频...' })
       
       // 使用下载服务获取音频数据
       const audioData = await downloadAudioData(audioUrl, 'bilibili', (progress, status) => {
         const scaledProgress = 5 + Math.round(progress * 0.3)
-        updateProgress(scaledProgress, status)
+        updateTask(extractTaskId, { progress: scaledProgress, statusText: status })
       })
       
       // 腾讯云ASR Base64方式限制5MB
@@ -712,10 +674,10 @@ const extractTranscript = async () => {
         : audioData
       
       if (audioData.length > MAX_SIZE) {
-        updateProgress(35, `音频过大，将识别前 ${(MAX_SIZE / 1024 / 1024).toFixed(1)}MB`)
+        updateTask(extractTaskId, { progress: 35, statusText: `音频过大，将识别前 ${(MAX_SIZE / 1024 / 1024).toFixed(1)}MB` })
       }
       
-      updateProgress(40, '正在转换音频格式...')
+      updateTask(extractTaskId, { progress: 40, statusText: '正在转换音频格式...' })
       
       // 转换为Base64 - 使用分块处理避免内存溢出
       const chunkSize = 32768
@@ -726,18 +688,18 @@ const extractTranscript = async () => {
       }
       const base64Data = btoa(binary)
       
-      updateProgress(45, '正在创建识别任务...')
+      updateTask(extractTaskId, { progress: 45, statusText: '正在创建识别任务...' })
       
       // 调用Base64识别接口
       result = await recognizeAudioWithData(base64Data, (status, message) => {
         if (status === 'creating') {
-          updateProgress(50, message)
+          updateTask(extractTaskId, { progress: 50, statusText: message })
         } else if (status === 'processing') {
           const match = message.match(/(\d+)%/)
           const pct = match ? parseInt(match[1]) : 50
-          updateProgress(55 + Math.round(pct * 0.45), message)
+          updateTask(extractTaskId, { progress: 55 + Math.round(pct * 0.45), statusText: message })
         } else if (status === 'done') {
-          updateProgress(100, message)
+          updateTask(extractTaskId, { progress: 100, statusText: message })
         }
       })
     } else if (videoInfo.value.platform === 'douyin') {
@@ -760,7 +722,7 @@ const extractTranscript = async () => {
       
       // 如果是从视频提取的音频，使用 FFmpeg 提取纯音频
       if (isVideoAudio) {
-        updateProgress(5, '正在从视频提取音频...')
+        updateTask(extractTaskId, { progress: 5, statusText: '正在从视频提取音频...' })
         
         // 调用后端音频提取接口
         const extractResponse = await fetch('http://127.0.0.1:3721/extract-audio', {
@@ -779,14 +741,14 @@ const extractTranscript = async () => {
         audioSize = extractResult.audio_size || 0
         
         console.log(`[extractTranscript] 音频提取成功: ${(audioSize / 1024).toFixed(1)}KB`)
-        updateProgress(35, `音频大小: ${(audioSize / 1024).toFixed(1)}KB`)
+        updateTask(extractTaskId, { progress: 35, statusText: `音频大小: ${(audioSize / 1024).toFixed(1)}KB` })
       } else {
         // 有独立音频源，直接下载
-        updateProgress(5, '正在下载抖音音频...')
+        updateTask(extractTaskId, { progress: 5, statusText: '正在下载抖音音频...' })
         
         const audioData = await downloadAudioData(audioUrl, 'douyin', (progress, status) => {
           const scaledProgress = 5 + Math.round(progress * 0.3)
-          updateProgress(scaledProgress, status)
+          updateTask(extractTaskId, { progress: scaledProgress, statusText: status })
         })
         
         // 腾讯云ASR Base64方式限制5MB
@@ -798,10 +760,10 @@ const extractTranscript = async () => {
         audioSize = finalData.length
         
         if (audioData.length > MAX_SIZE) {
-          updateProgress(35, `音频过大，将识别前 ${(MAX_SIZE / 1024 / 1024).toFixed(1)}MB`)
+          updateTask(extractTaskId, { progress: 35, statusText: `音频过大，将识别前 ${(MAX_SIZE / 1024 / 1024).toFixed(1)}MB` })
         }
         
-        updateProgress(40, '正在转换音频格式...')
+        updateTask(extractTaskId, { progress: 40, statusText: '正在转换音频格式...' })
         
         // 转换为Base64
         const chunkSize = 32768
@@ -813,18 +775,18 @@ const extractTranscript = async () => {
         base64Data = btoa(binary)
       }
       
-      updateProgress(45, '正在创建识别任务...')
+      updateTask(extractTaskId, { progress: 45, statusText: '正在创建识别任务...' })
       
       // 调用Base64识别接口
       result = await recognizeAudioWithData(base64Data, (status, message) => {
         if (status === 'creating') {
-          updateProgress(50, message)
+          updateTask(extractTaskId, { progress: 50, statusText: message })
         } else if (status === 'processing') {
           const match = message.match(/(\d+)%/)
           const pct = match ? parseInt(match[1]) : 50
-          updateProgress(50 + Math.round(pct * 0.45), message)
+          updateTask(extractTaskId, { progress: 50 + Math.round(pct * 0.45), statusText: message })
         } else if (status === 'done') {
-          updateProgress(100, message)
+          updateTask(extractTaskId, { progress: 100, statusText: message })
         }
       })
     } else if (videoInfo.value.platform === 'xiaohongshu') {
@@ -844,7 +806,7 @@ const extractTranscript = async () => {
         throw new Error('未获取到小红书视频链接')
       }
       
-      updateProgress(5, '正在提取音频...')
+      updateTask(extractTaskId, { progress: 5, statusText: '正在提取音频...' })
       
       // 调用后端音频提取接口（使用 FFmpeg 从视频中提取纯音频）
       const extractResponse = await fetch('http://127.0.0.1:3721/extract-audio', {
@@ -867,23 +829,23 @@ const extractTranscript = async () => {
       // 检查音频大小是否超过 5MB 限制
       const MAX_SIZE = 5 * 1024 * 1024
       if (audioSize > MAX_SIZE) {
-        updateProgress(35, `音频过大 (${(audioSize / 1024 / 1024).toFixed(1)}MB)，可能无法完整识别`)
+        updateTask(extractTaskId, { progress: 35, statusText: `音频过大 (${(audioSize / 1024 / 1024).toFixed(1)}MB)，可能无法完整识别` })
       } else {
-        updateProgress(35, `音频大小: ${(audioSize / 1024).toFixed(1)}KB`)
+        updateTask(extractTaskId, { progress: 35, statusText: `音频大小: ${(audioSize / 1024).toFixed(1)}KB` })
       }
       
-      updateProgress(45, '正在创建识别任务...')
+      updateTask(extractTaskId, { progress: 45, statusText: '正在创建识别任务...' })
       
       // 调用 Base64 识别接口
       result = await recognizeAudioWithData(base64Data, (status, message) => {
         if (status === 'creating') {
-          updateProgress(50, message)
+          updateTask(extractTaskId, { progress: 50, statusText: message })
         } else if (status === 'processing') {
           const match = message.match(/(\d+)%/)
           const pct = match ? parseInt(match[1]) : 50
-          updateProgress(50 + Math.round(pct * 0.45), message)
+          updateTask(extractTaskId, { progress: 50 + Math.round(pct * 0.45), statusText: message })
         } else if (status === 'done') {
-          updateProgress(100, message)
+          updateTask(extractTaskId, { progress: 100, statusText: message })
         }
       })
     } else {
@@ -891,13 +853,14 @@ const extractTranscript = async () => {
     }
     
     transcript.value = result || '未识别到语音内容'
+    completeTask(extractTaskId, true)
     showToast('文案提取完成')
   } catch (error) {
     console.error('语音识别失败:', error)
+    completeTask(extractTaskId, false, error.message)
     showToast(`识别失败: ${error.message}`)
   } finally {
     extracting.value = false
-    hideProgress()
   }
 }
 
@@ -1176,84 +1139,5 @@ const copyRewritten = () => {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.25);
-}
-
-/* Progress Overlay */
-.progress-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-}
-
-.progress-modal {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
-  min-width: 320px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
-
-.progress-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.progress-bar-container {
-  height: 8px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.progress-status {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
-}
-
-.progress-percent {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #667eea;
-}
-
-.progress-enter-active,
-.progress-leave-active {
-  transition: all 0.3s ease;
-}
-
-.progress-enter-from,
-.progress-leave-to {
-  opacity: 0;
-}
-
-.progress-enter-from .progress-modal,
-.progress-leave-to .progress-modal {
-  transform: scale(0.9);
 }
 </style>

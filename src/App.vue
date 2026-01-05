@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import VideoParser from './components/VideoParser.vue'
+import TaskCenter from './components/common/TaskCenter.vue'
 
 const isClosing = ref(false)
 let unlisten = null
@@ -26,6 +27,9 @@ onUnmounted(() => {
 <template>
   <div id="app">
     <VideoParser />
+    
+    <!-- 任务中心 -->
+    <TaskCenter />
     
     <!-- 关闭提示遮罩层 -->
     <div v-if="isClosing" class="closing-overlay">
