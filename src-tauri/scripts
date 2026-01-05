@@ -1,0 +1,411 @@
+"""
+抖音视频解析服务
+基于 a_bogus 签名实现抖音视频解析
+"""
+
+import os
+import sys
+import re
+import json
+import asyncio
+from typing import Optional
+from dataclasses import dataclass, asdict
+from urllib.parse import urlparse, parse_qs
+
+import requests
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import uvicorn
+
+# 添加 douyin_utils 到路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from douyin_utils.bogus_sign_utils import CommonUtils
+
+
+@dataclass
+class VideoInfo:
+    """视频信息数据类"""
+    video_id: str
+    title: str
+    author: str
+    author_id: str
+    cover_url: str
+    video_url: str
+    video_url_watermark: str
+    duration: int
+    create_time: int
+    statistics: dict
+
+
+import copy
+import urllib3
+import warnings
+
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
+
+class DouyinDownloader:
+    """抖音视频下载器"""
+    
+    def __init__(self):
+        self.common_utils = CommonUtils()
+        self.user_agent = self.common_utils.user_agent
+        self.headers = {
+            'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+            'Accept': 'application/json, text/plain, */*',
+            'sec-ch-ua-mobile': '?0',
+            'User-Agent': self.user_agent,
+            'sec-ch-ua-platform': '"Windows"',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'empty',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        }
+        self.ms_token = self.common_utils.get_ms_token()
+        # 固定的 ttwid 和 webid (可从浏览器中获取)
+        self.ttwid = '1%7CvDWCB8tYdKPbdOlqwNTkDPhizBaV9i91KjYLKJbqurg%7C1723536402%7C314e63000decb79f46b8ff255560b29f4d8c57352dad465b41977db4830b4c7e'
+        self.webid = '7307457174287205926'
+    
+    def get_video_id(self, url: str) -> Optional[str]:
+        """从URL中提取视频ID"""
+        # 清理URL
+        url = url.strip()
+        
+        # 从分享文本中提取URL
+        url_pattern = re.compile(
+            r'\bhttps?://(?:www\.|[-a-zA-Z0-9.@:%_+~#=]{1,256}\.[a-zA-Z0-9()]{1,6})\b(?:[-a-zA-Z0-9()@:%_+.~#?&//=]*)?'
+        )
+        match = url_pattern.search(url)
+        if match:
+            url = match.group()
+        
+        # 直接包含video_id的链接
+        video_id_match = re.search(r'/video/(\d+)', url)
+        if video_id_match:
+            return video_id_match.group(1)
+        
+        # 从share/video路径提取
+        share_match = re.search(r'/share/video/(\d+)', url)
+        if share_match:
+            return share_match.group(1)
+        
+        # 短链接需要重定向
+        if 'v.douyin.com' in url or 'vm.tiktok.com' in url:
+            return self._resolve_short_url(url)
+        
+        # 从URL参数中获取
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+        if 'item_id' in params:
+            return params['item_id'][0]
+        if 'modal_id' in params:
+            return params['modal_id'][0]
+        
+        return None
+    
+    def _resolve_short_url(self, short_url: str) -> Optional[str]:
+        """解析短链接获取视频ID"""
+        try:
+            headers = {
+                'User-Agent': self.user_agent,
+            }
+            # 缩短超时时间，增加重试
+            for attempt in range(3):
+                try:
+                    resp = requests.get(short_url, headers=headers, allow_redirects=False, timeout=5)
+                    location = resp.headers.get('Location', '')
+                    
+                    if location:
+                        # 从重定向地址提取视频ID
+                        video_id_match = re.search(r'/video/(\d+)', location)
+                        if video_id_match:
+                            return video_id_match.group(1)
+                        share_match = re.search(r'/share/video/(\d+)', location)
+                        if share_match:
+                            return share_match.group(1)
+                        note_match = re.search(r'/note/(\d+)', location)
+                        if note_match:
+                            return note_match.group(1)
+                        # 继续跟踪重定向
+                        if 'douyin.com' in location:
+                            return self._resolve_short_url(location)
+                    break
+                except requests.exceptions.Timeout:
+                    print(f"[抖音解析] 短链接解析超时，重试 {attempt + 1}/3")
+                    if attempt == 2:
+                        raise
+        except Exception as e:
+            print(f"[抖音解析] 解析短链接失败: {e}")
+        
+        return None
+    
+    def fetch_video_data(self, video_id: str) -> dict:
+        """通过API获取视频数据 - 参考 video-parser-main 实现"""
+        referer_url = f"https://www.douyin.com/video/{video_id}?previous_page=web_code_link"
+        
+        # 构建完整的 API URL（与参考项目一致）
+        play_url = (
+            f"https://www.douyin.com/aweme/v1/web/aweme/detail/?"
+            f"device_platform=webapp&aid=6383&channel=channel_pc_web&aweme_id={video_id}"
+            f"&update_version_code=170400&pc_client_type=1&version_code=190500&version_name=19.5.0"
+            f"&cookie_enabled=true&screen_width=1536&screen_height=864&browser_language=zh-CN"
+            f"&browser_platform=Win32&browser_name=Chrome&browser_version=127.0.0.0"
+            f"&browser_online=true&engine_name=Blink&engine_version=127.0.0.0"
+            f"&os_name=Windows&os_version=10&cpu_core_num=8&device_memory=8&platform=PC"
+            f"&downlink=1.25&effective_type=4g&round_trip_time=50"
+            f"&webid={self.webid}&msToken={self.ms_token}"
+        )
+        
+        # 生成 a_bogus 签名
+        abogus = self.common_utils.get_abogus(play_url, self.user_agent)
+        final_url = f"{play_url}&a_bogus={abogus}"
+        
+        # 构建请求头（与参考项目一致）
+        new_headers = copy.deepcopy(self.headers)
+        new_headers['Referer'] = referer_url
+        # 完整的 Cookie（关键！）
+        new_headers['Cookie'] = (
+            f"ttwid={self.ttwid}; "
+            f"UIFID_TEMP=973a3fd64dcc46a3490fd9b60d4a8e663b34df4ccc4bbcf97643172fb712d8b085a6744acabbffda742bf60a364e4bd6ba5522889cc6f6598b4ea0b83bec2c70bac5163dec36cdb8fb58ea1ae00a413d; "
+            f"s_v_web_id=verify_lzhq5z5k_lbhbXlzb_o9V2_4SQt_8VKz_WZhdN8ARwLk5; "
+            f"home_can_add_dy_2_desktop=%220%22; dy_swidth=1536; dy_sheight=864; "
+            f"stream_recommend_feed_params=%22%7B%5C%22cookie_enabled%5C%22%3Atrue%2C%5C%22screen_width%5C%22%3A1536%2C%5C%22screen_height%5C%22%3A864%2C%5C%22browser_online%5C%22%3Atrue%2C%5C%22cpu_core_num%5C%22%3A8%2C%5C%22device_memory%5C%22%3A8%2C%5C%22downlink%5C%22%3A10%2C%5C%22effective_type%5C%22%3A%5C%224g%5C%22%2C%5C%22round_trip_time%5C%22%3A50%7D%22; "
+            f"csrf_session_id=c25ac0fd3e72f260d4d666d4e5b59401; "
+            f"strategyABtestKey=%221722906710.493%22; "
+            f"passport_csrf_token=e8e0d86abdd80d40b0a35f4417140777; "
+            f"passport_csrf_token_default=e8e0d86abdd80d40b0a35f4417140777; "
+            f"bd_ticket_guard_client_web_domain=2; "
+            f"FORCE_LOGIN=%7B%22videoConsumedRemainSeconds%22%3A180%7D; "
+            f"fpk1=U2FsdGVkX1/MzFW4T42Rh27SkY1k9enxmP1563AOYXnpFPaQOzdqmDBHwkaQrfKGx2e0KwNeDci6fNn3aTjflw==; "
+            f"fpk2=362d7fe3d8b2581bffa359f0eeda7106; "
+            f"UIFID=973a3fd64dcc46a3490fd9b60d4a8e663b34df4ccc4bbcf97643172fb712d8b0001661437e34e9c40cd654256ca161ee16bfeed98d4c55748714f5d5e8b3961f299814cae48bfbbd1b49196b4ee347af48639652b3235c20ab5ceedde56f53b486cfba7e3400cb7f7d39bc7dbade81d368864fde51e4c52065bf7329ca6a7be919aa4b6add8afe59f8857a5fccb62199c9e66654824ef007ff13d9780400ad16; "
+            f"volume_info=%7B%22isUserMute%22%3Afalse%2C%22isMute%22%3Atrue%2C%22volume%22%3A0.5%7D; "
+            f"biz_trace_id=d2dfa5cf; "
+            f"bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCR1ZlY2RTY2piNWVBcHc0aVNTaTFrTThYSXdDOHNaK0NoSk16WWpyc2ZyWEYvT3VmMTB3MGpZMWpLZXdQWTFLQ0xLeERzajE5V3Y4RXlKc1U2MzlKejQ9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoxfQ%3D%3D; "
+            f"download_guide=%221%2F20240806%2F0%22; "
+            f"IsDouyinActive=false; "
+            f"__ac_nonce=066b1804600a583d1df8e; "
+            f"__ac_signature=_02B4Z6wo00f01b-.zKAAAIDA3JBBKKMofAG.n8gAAAlf52; "
+            f"__ac_referer={referer_url}"
+        )
+        
+        print(f"[抖音解析] 请求API: {final_url[:100]}...")
+        
+        try:
+            resp = requests.get(final_url, headers=new_headers, verify=False, timeout=10)
+            print(f"[抖音解析] 响应状态: {resp.status_code}")
+            
+            if resp.text:
+                data = resp.json()
+                if data.get('status_code') == 0 or data.get('aweme_detail'):
+                    print(f"[抖音解析] 成功获取视频数据")
+                    return data
+                else:
+                    print(f"[抖音解析] API返回错误: status_code={data.get('status_code')}")
+                    return None
+            else:
+                print(f"[抖音解析] 响应内容为空")
+                return None
+        except requests.exceptions.JSONDecodeError as e:
+            print(f"[抖音解析] JSON解析失败: {e}")
+            return None
+        except Exception as e:
+            print(f"[抖音解析] API请求失败: {e}")
+            return None
+    
+    def parse_video_info(self, data: dict) -> Optional[VideoInfo]:
+        """解析视频信息"""
+        try:
+            aweme_detail = data.get('aweme_detail', {})
+            if not aweme_detail:
+                return None
+            
+            video_id = str(aweme_detail.get('aweme_id', ''))
+            title = aweme_detail.get('desc', '')
+            
+            # 作者信息
+            author_info = aweme_detail.get('author', {})
+            author = author_info.get('nickname', '')
+            author_id = author_info.get('uid', '') or author_info.get('sec_uid', '')
+            
+            # 封面
+            cover = aweme_detail.get('video', {}).get('cover', {})
+            cover_url = ''
+            if cover:
+                url_list = cover.get('url_list', [])
+                if url_list:
+                    cover_url = url_list[0]
+            
+            # 视频地址 - 优先从 bit_rate 获取高清视频
+            video = aweme_detail.get('video', {})
+            video_url = ''
+            video_url_watermark = ''
+            
+            # 方式1: 从 bit_rate 获取 (高清)
+            bit_rate = video.get('bit_rate', [])
+            if bit_rate and len(bit_rate) > 0:
+                # 按码率排序，取最高的
+                sorted_rates = sorted(bit_rate, key=lambda x: x.get('bit_rate', 0), reverse=True)
+                play_addr = sorted_rates[0].get('play_addr', {})
+                url_list = play_addr.get('url_list', [])
+                if url_list:
+                    # 通常第3个是最稳定的CDN
+                    video_url = url_list[2] if len(url_list) > 2 else url_list[0]
+            
+            # 方式2: 从 play_addr 获取
+            if not video_url:
+                play_addr = video.get('play_addr', {})
+                if play_addr:
+                    url_list = play_addr.get('url_list', [])
+                    if url_list:
+                        video_url = url_list[0]
+                        # 替换为无水印地址
+                        video_url = video_url.replace('playwm', 'play')
+            
+            # 有水印地址
+            play_addr_wm = video.get('play_addr_lowbr', {})
+            if play_addr_wm:
+                url_list = play_addr_wm.get('url_list', [])
+                if url_list:
+                    video_url_watermark = url_list[0]
+            
+            # 时长
+            duration = video.get('duration', 0)
+            if duration > 1000:
+                duration = duration // 1000
+            
+            # 创建时间
+            create_time = aweme_detail.get('create_time', 0)
+            
+            # 统计数据
+            statistics = aweme_detail.get('statistics', {})
+            stats = {
+                'digg_count': statistics.get('digg_count', 0),
+                'comment_count': statistics.get('comment_count', 0),
+                'share_count': statistics.get('share_count', 0),
+                'collect_count': statistics.get('collect_count', 0),
+                'play_count': statistics.get('play_count', 0),
+            }
+            
+            return VideoInfo(
+                video_id=video_id,
+                title=title,
+                author=author,
+                author_id=str(author_id),
+                cover_url=cover_url,
+                video_url=video_url,
+                video_url_watermark=video_url_watermark,
+                duration=duration,
+                create_time=create_time,
+                statistics=stats
+            )
+        except Exception as e:
+            print(f"[抖音解析] 解析视频信息失败: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def parse(self, share_url: str) -> Optional[VideoInfo]:
+        """解析抖音分享链接"""
+        # 1. 提取视频ID
+        video_id = self.get_video_id(share_url)
+        if not video_id:
+            raise ValueError("无法提取视频ID")
+        
+        print(f"[抖音解析] 视频ID: {video_id}")
+        
+        # 2. 获取视频数据
+        data = self.fetch_video_data(video_id)
+        if not data:
+            raise ValueError("无法获取视频数据，请检查链接是否有效")
+        
+        # 3. 解析视频信息
+        video_info = self.parse_video_info(data)
+        if not video_info:
+            raise ValueError("无法解析视频信息")
+        
+        return video_info
+
+
+# ==================== FastAPI 服务 ====================
+
+app = FastAPI(
+    title="抖音视频解析服务",
+    description="解析抖音分享链接，获取无水印视频地址",
+    version="2.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+downloader = DouyinDownloader()
+
+
+@app.get("/")
+async def root():
+    return {
+        "service": "抖音视频解析服务",
+        "version": "2.0.0",
+        "usage": {
+            "parse": "GET /parse?url=<抖音分享链接>",
+            "docs": "GET /docs"
+        }
+    }
+
+
+@app.get("/parse")
+async def parse_video(url: str = Query(..., description="抖音分享链接或视频链接")):
+    """解析抖音视频链接"""
+    try:
+        video_info = downloader.parse(url)
+        return JSONResponse(content={
+            "code": 0,
+            "message": "success",
+            "data": asdict(video_info)
+        })
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"解析失败: {str(e)}")
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
+# ==================== 命令行 ====================
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "serve":
+            port = int(sys.argv[2]) if len(sys.argv) > 2 else 8000
+            print(f"启动服务: http://0.0.0.0:{port}")
+            uvicorn.run(app, host="0.0.0.0", port=port)
+        else:
+            # 解析链接
+            url = sys.argv[1]
+            print(f"\n解析链接: {url}")
+            print("-" * 50)
+            try:
+                info = downloader.parse(url)
+                print(f"视频ID: {info.video_id}")
+                print(f"标题: {info.title}")
+                print(f"作者: {info.author}")
+                print(f"时长: {info.duration}秒")
+                print(f"封面: {info.cover_url}")
+                print(f"视频: {info.video_url}")
+            except Exception as e:
+                print(f"解析失败: {e}")
+    else:
+        print("使用方法:")
+        print("  python douyinParser.py <抖音链接>  - 解析单个链接")
+        print("  python douyinParser.py serve [端口] - 启动API服务")
