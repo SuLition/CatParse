@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
-import { loadConfig, saveConfig, checkConfig, resetConfig } from '../services/config.js'
+import { loadConfig, saveConfig, checkConfig, resetConfig } from '@/services/config'
 import { selectDownloadDir, getSystemDownloadDir } from '../services/download/tauriDownload.js'
 import {
   generateQRCode,

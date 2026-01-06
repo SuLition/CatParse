@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import ParsePage from '../views/ParsePage.vue';
-import HistoryPage from '../views/HistoryPage.vue';
-import SettingsPage from '../views/SettingsPage.vue';
+import { ParsePage, HistoryPage, SettingsPage } from '@/views';
 
 const routes = [
   {

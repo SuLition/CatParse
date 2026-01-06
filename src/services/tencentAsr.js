@@ -4,7 +4,7 @@
  */
 
 import CryptoJS from 'crypto-js'
-import { getServiceConfig } from './config.js'
+import { getServiceConfig } from './config'
 import { SERVICE_URL } from './api/config.js'
 
 // 获取配置

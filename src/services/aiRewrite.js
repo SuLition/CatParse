@@ -2,23 +2,16 @@
  * AI文案改写服务
  */
 
-import { getServiceConfig } from './config.js'
+import { getServiceConfig } from './config'
 import { SERVICE_URL } from './api/config.js'
-
-// 默认提示词
-const defaultPrompts = {
-  professional: '请将以下文案改写为专业、正式的风格，适合商务或官方场合使用。保持信息完整，语言精炼专业：',
-  casual: '请将以下文案改写为轻松、口语化的风格，像朋友聊天一样亲切自然，可以适当加入网络流行语和表情：',
-  funny: '请将以下文案改写为幽默搞笑的风格，加入有趣的比喻、夸张和调侃，让读者会心一笑：',
-  short: '请将以下文案精简压缩，只保留最核心的信息，用最少的字数表达完整含义：'
-}
+import { DEFAULT_PROMPTS } from '@/constants'
 
 /**
  * 获取提示词
  */
 function getPrompt(style) {
   const prompts = getServiceConfig('prompts')
-  return prompts[style] || defaultPrompts[style] || defaultPrompts.professional
+  return prompts[style] || DEFAULT_PROMPTS[style] || DEFAULT_PROMPTS.professional
 }
 
 /**

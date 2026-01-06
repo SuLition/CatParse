@@ -1,49 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { getHistory, deleteHistory, clearHistory } from '@/services/storage';
+import { getPlatformName, getPlatformColor } from '@/constants/platforms';
 
-const historyList = ref([
-  {
-    id: 1,
-    title: '测试视频标题',
-    platform: 'bilibili',
-    url: 'https://www.bilibili.com/video/BV1xx411c7mu',
-    downloadTime: '2024-01-15 14:30',
-    status: 'completed',
-    size: '125.6 MB'
-  },
-  {
-    id: 2,
-    title: '另一个测试视频',
-    platform: 'douyin',
-    url: 'https://v.douyin.com/xxxxx',
-    downloadTime: '2024-01-15 13:20',
-    status: 'completed',
-    size: '58.3 MB'
-  }
-]);
+const historyList = ref([]);
 
-const getPlatformName = (platform) => {
-  const names = {
-    bilibili: 'Bilibili',
-    douyin: '抖音',
-    kuaishou: '快手',
-    xiaohongshu: '小红书'
-  };
-  return names[platform] || platform;
-};
-
-const getPlatformColor = (platform) => {
-  const colors = {
-    bilibili: '#00a1d6',
-    douyin: '#fe2c55',
-    kuaishou: '#ff6600',
-    xiaohongshu: '#ff2442'
-  };
-  return colors[platform] || '#4a9eff';
-};
+// 加载历史记录
+onMounted(() => {
+  historyList.value = getHistory();
+});
 
 const handleDelete = (id) => {
-  console.log('删除记录:', id);
+  deleteHistory(id);
   historyList.value = historyList.value.filter(item => item.id !== id);
 };
 
@@ -53,6 +21,7 @@ const handleOpenFolder = (id) => {
 
 const clearAll = () => {
   if (confirm('确定要清空所有下载记录吗？')) {
+    clearHistory();
     historyList.value = [];
   }
 };

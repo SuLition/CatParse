@@ -12,12 +12,9 @@ import {
   downloadXiaohongshu,
   downloadAudioData
 } from '../services/download/downloadService.js';
-import {isLoggedIn} from '../services/auth/bilibiliAuth.js';
-import BilibiliDetail from '../components/platforms/BilibiliDetail.vue';
-import DouyinDetail from '../components/platforms/DouyinDetail.vue';
-import XiaohongshuDetail from '../components/platforms/XiaohongshuDetail.vue';
-import {formatNumber, formatDuration, formatFileSize, formatPubDate} from '../utils/format.js';
+import {formatNumber, formatDuration, formatPubDate} from '../utils/format.js';
 import {extractUrlFromText} from '../utils/urlParser.js';
+import {PLATFORMS, AI_MODELS, REWRITE_STYLES, DEFAULT_PROMPTS} from '../constants/options.js';
 import CustomSelect from '../components/common/CustomSelect.vue';
 
 const videoUrl = ref('');
@@ -32,41 +29,11 @@ const customPrompt = ref('');
 const isRewriting = ref(false);
 const isExtracting = ref(false);
 const selectedQuality = ref('');
-
-const platforms = [
-  {value: 'bilibili', label: 'B站'},
-  {value: 'douyin', label: '抖音'},
-  {value: 'kuaishou', label: '快手'},
-  {value: 'xiaohongshu', label: '小红书'}
-];
-
-const aiModels = [
-  {value: 'deepseek', label: 'DeepSeek'},
-  {value: 'doubao', label: '豆包'},
-  {value: 'qianwen', label: '千问'},
-  {value: 'hunyuan', label: '元宝'}
-];
-
-const rewriteStyles = [
-  {value: 'professional', label: '专业'},
-  {value: 'casual', label: '口语化'},
-  {value: 'funny', label: '幽默'},
-  {value: 'short', label: '精简'}
-];
-
 const qualityOptions = ref([]);
-
-// 默认提示词
-const defaultPrompts = {
-  professional: '请将以下文案改写为专业、正式的风格，适合商务或官方场合使用。保持信息完整，语言精炼专业：',
-  casual: '请将以下文案改写为轻松、口语化的风格，像朋友聊天一样亲切自然，可以适当加入网络流行语和表情：',
-  funny: '请将以下文案改写为幽默搞笑的风格，加入有趣的比喻、夸张和调侃，让读者会心一笑：',
-  short: '请将以下文案精简压缩，只保留最核心的信息，用最少的字数表达完整含义：'
-};
 
 // 加载提示词（直接使用默认提示词）
 const loadPrompt = (style) => {
-  customPrompt.value = defaultPrompts[style] || '';
+  customPrompt.value = DEFAULT_PROMPTS[style] || '';
 };
 
 // 风格切换时加载对应提示词
@@ -77,15 +44,6 @@ const onStyleChange = (newStyle) => {
 // 初始化加载
 onMounted(() => {
   loadPrompt(rewriteStyle.value);
-});
-
-const currentPlatformComponent = computed(() => {
-  const components = {
-    'bilibili': BilibiliDetail,
-    'douyin': DouyinDetail,
-    'xiaohongshu': XiaohongshuDetail
-  };
-  return components[platform.value] || null;
 });
 
 // 平台切换时清空视频信息
@@ -470,7 +428,7 @@ const handleDownload = async () => {
     <div class="top-input-bar">
       <CustomSelect
           v-model="platform"
-          :options="platforms"
+          :options="PLATFORMS"
           class="platform-select"
       />
 
@@ -677,7 +635,7 @@ const handleDownload = async () => {
             <label class="control-label">AI模型</label>
             <CustomSelect
                 v-model="aiModel"
-                :options="aiModels"
+                :options="AI_MODELS"
                 class="control-select"
             />
           </div>
@@ -686,7 +644,7 @@ const handleDownload = async () => {
             <label class="control-label">改写风格</label>
             <CustomSelect
                 v-model="rewriteStyle"
-                :options="rewriteStyles"
+                :options="REWRITE_STYLES"
                 class="control-select"
                 @change="onStyleChange"
             />

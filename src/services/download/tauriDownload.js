@@ -3,7 +3,7 @@
  * 使用 Rust 后端进行高速下载
  */
 
-import { getServiceConfig } from '../config.js'
+import { getServiceConfig } from '../config'
 
 // 检测是否在 Tauri 环境中运行
 export function isTauri() {
