@@ -6,10 +6,14 @@ import {toasterOptions} from "./utils/index.js";
 import TitleBar from "./components/common/TitleBar.vue";
 import Sidebar from "./components/common/Sidebar.vue";
 import {initTheme} from './services/theme'
+import {getCurrentWindow} from '@tauri-apps/api/window'
 
-// 初始化主题
-onMounted(() => {
-  initTheme()
+// 初始化主题并显示窗口
+onMounted(async () => {
+  await initTheme()
+  // 前端加载完成后显示窗口
+  const appWindow = getCurrentWindow()
+  await appWindow.show()
 })
 </script>
 
@@ -43,6 +47,13 @@ html, body, #app {
   transition: background-color 0.3s ease;
 }
 
+/* 启用毛玻璃效果时背景透明 */
+html.window-effect-enabled,
+html.window-effect-enabled body,
+html.window-effect-enabled #app {
+  background: transparent;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
@@ -60,6 +71,26 @@ body {
   overflow: hidden;
   background: var(--bg-gradient);
   transition: background 0.3s ease;
+}
+
+/* 启用毛玻璃效果时主内容区背景透明 */
+html.window-effect-enabled .main-content {
+  background: transparent;
+}
+
+/* 启用毛玻璃效果时侧边栏背景透明 */
+html.window-effect-enabled .sidebar {
+  background: transparent !important;
+}
+
+/* 启用毛玻璃效果时设置页面透明 */
+html.window-effect-enabled .settings-page {
+  background: transparent !important;
+}
+
+html.window-effect-enabled .settings-section {
+  background: rgba(43, 45, 48, 0.6) !important;
+  backdrop-filter: blur(10px);
 }
 
 @keyframes spin {

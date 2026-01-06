@@ -70,6 +70,14 @@ async function applyWindowEffect(effect, isDark) {
       isDark: isDark
     })
     console.log('[WindowEffect]', result)
+    
+    // 根据效果类型设置背景透明度
+    const root = document.documentElement
+    if (effect === 'none') {
+      root.classList.remove('window-effect-enabled')
+    } else {
+      root.classList.add('window-effect-enabled')
+    }
   } catch (error) {
     console.warn('[窗口效果] 设置失败:', error)
   }

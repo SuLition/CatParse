@@ -23,7 +23,7 @@ export const DARK_THEME = {
     '--bg-tertiary': '#3d3f43',
     '--bg-elevated': '#1e1f22',
     '--bg-hover': '#4a4c50',
-    '--bg-gradient': 'linear-gradient(135deg, rgba(30, 31, 34, 0.92) 0%, rgba(30, 31, 34, 0.85) 100%), linear-gradient(to bottom right, rgba(139, 92, 246, 0.15) 0%, rgba(30, 31, 34, 0.9) 50%, rgba(6, 182, 212, 0.15) 100%)',
+    '--bg-gradient': '#1e1f22',
 
     '--text-primary': '#ffffff',
     '--text-secondary': '#afb1b3',
@@ -53,7 +53,7 @@ export const LIGHT_THEME = {
     '--bg-tertiary': '#e8e8ed',
     '--bg-elevated': '#ffffff',
     '--bg-hover': '#e0e0e5',
-    '--bg-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.8) 100%), linear-gradient(to bottom right, rgba(251, 146, 60, 0.35) 0%, rgba(255, 255, 255, 0.85) 35%, rgba(134, 239, 172, 0.3) 65%, rgba(125, 211, 252, 0.35) 100%)',
+    '--bg-gradient': '#f9f9f9',
 
     '--text-primary': '#1d1d1f',
     '--text-secondary': '#6e6e73',
