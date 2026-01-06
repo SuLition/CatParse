@@ -12,14 +12,14 @@
   "app": {
     "windows": [
       {
+        "minWidth": 960,
+        "minHeight": 680,
+        "title": "文案助手",
         "label": "main",
-        "title": "文案小助手",
-        "width": 1400,
-        "height": 800,
-        "resizable": true,
-        "fullscreen": false,
-        "center": true,
-        "visible": false
+        "width": 960,
+        "height": 680,
+        "decorations": false,
+        "dragDropEnabled": false
       }
     ],
     "security": {

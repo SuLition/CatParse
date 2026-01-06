@@ -1,42 +1,24 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import VideoParser from './components/VideoParser.vue'
-import TaskCenter from './components/common/TaskCenter.vue'
+import {Toaster} from 'vue-sonner'
+import CloseMask from "./components/common/CloseMask.vue";
+import {toasterOptions} from "./utils/index.js";
+import TitleBar from "./components/common/TitleBar.vue";
+import Sidebar from "./components/common/Sidebar.vue";
 
-const isClosing = ref(false)
-let unlisten = null
-
-onMounted(async () => {
-  // 监听关闭事件
-  try {
-    const { listen } = await import('@tauri-apps/api/event')
-    unlisten = await listen('app-closing', () => {
-      console.log('[App] 收到关闭事件')
-      isClosing.value = true
-    })
-  } catch (e) {
-    console.log('[App] 非 Tauri 环境')
-  }
-})
-
-onUnmounted(() => {
-  if (unlisten) unlisten()
-})
 </script>
 
 <template>
-  <div id="app">
-    <VideoParser />
-    
-    <!-- 任务中心 -->
-    <TaskCenter />
-    
-    <!-- 关闭提示遮罩层 -->
-    <div v-if="isClosing" class="closing-overlay">
-      <div class="closing-content">
-        <div class="closing-spinner"></div>
-        <p class="closing-text">正在关闭服务...</p>
-      </div>
+  <div class="app-container">
+    <Sidebar/>
+    <div class="main-content">
+      <TitleBar/>
+      <router-view />
+      <!--<VideoParser />-->
+      <!-- 消息通知 -->
+      <Toaster v-bind="toasterOptions"/>
+
+      <!-- 关闭提示遮罩层 -->
+      <CloseMask/>
     </div>
   </div>
 </template>
@@ -48,47 +30,29 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+html, body, #app {
+  background: #1e1f22;
   min-height: 100vh;
-}
-
-#app {
-  min-height: 100vh;
-  width: 100vw;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
-/* 关闭提示样式 */
-.closing-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  backdrop-filter: blur(4px);
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.closing-content {
+.app-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.main-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.closing-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  overflow: hidden;
 }
 
 @keyframes spin {
@@ -97,9 +61,50 @@ body {
   }
 }
 
-.closing-text {
-  color: #fff;
-  font-size: 16px;
-  font-weight: 500;
+/* 全局下拉框样式 */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #1e1f22;
+  color: #ffffff;
+  border: 1px solid #3d3f43;
+  border-radius: 6px;
+  padding: 8px 32px 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23afb1b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
 }
+
+select:hover {
+  border-color: #4a9eff;
+}
+
+select:focus {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.15);
+}
+
+select option {
+  background-color: #2b2d30;
+  color: #ffffff;
+  padding: 10px 12px;
+}
+
+select option:hover,
+select option:checked {
+  background-color: #4a9eff;
+  color: #ffffff;
+}
+
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 </style>

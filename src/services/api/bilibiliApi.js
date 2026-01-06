@@ -156,6 +156,7 @@ export function formatBilibiliVideoInfo(data) {
     likes: data.likes || '0',
     comments: data.comments || '0',
     danmaku: data.danmaku || '0',
+    coin: data.coin || '0',
     favorite: data.favorite || '0',
     shares: data.shares || '0',
     

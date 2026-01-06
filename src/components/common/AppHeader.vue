@@ -6,7 +6,7 @@
         <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
         <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
       </svg>
-      <span>文案小助手</span>
+      <span>文案助手</span>
     </div>
     <div class="header-right">
       <!-- 解析服务状态指示器 -->

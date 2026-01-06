@@ -3,6 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import { spawn } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite';
+import { ArcoResolver } from 'unplugin-vue-components/resolvers';
+
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url)
@@ -73,10 +77,39 @@ function startBackendPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), startBackendPlugin()],
+  plugins: [
+      vue(),
+      startBackendPlugin(),
+      AutoImport({
+        resolvers: [ArcoResolver()],
+      }),
+      Components({
+        resolvers: [
+          ArcoResolver({
+            sideEffect: true
+          })
+        ]
+      })
+  ],
+  resolve: {
+    alias: { '@': '/src' },
+  },
+  clearScreen: false,
   server: {
     port: 15173,  // 使用高位端口避免冲突
     strictPort: true
   },
-  // 注意：代理配置已移除，所有跨域请求统一通过 parser-service 处理
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        sourcemapPathTransform: (rel, src) =>
+            '/' +
+            path
+                .relative(process.cwd(), path.resolve(path.dirname(src), rel))
+                .replace(/\\/g, '/'),
+      },
+    },
+    target: 'ESNext',
+  },
 })

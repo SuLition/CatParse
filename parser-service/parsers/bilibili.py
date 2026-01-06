@@ -305,15 +305,88 @@ class BilibiliParser:
             bvid = self.video_data.get('bvid', self.bvid or '')
             duration = self.video_data.get('duration', 0)
             pubdate = self.video_data.get('pubdate', 0)
+            ctime = self.video_data.get('ctime', 0)
+            
+            # 分区信息
+            tid = self.video_data.get('tid', 0)
+            tid_v2 = self.video_data.get('tid_v2', 0)
+            tname = self.video_data.get('tname', '')
+            tname_v2 = self.video_data.get('tname_v2', '')
+            
+            # 其他基础信息
+            copyright_type = self.video_data.get('copyright', 0)
+            videos_count = self.video_data.get('videos', 1)
+            state = self.video_data.get('state', 0)
+            dynamic = self.video_data.get('dynamic', '')
+            mission_id = self.video_data.get('mission_id', 0)
+            season_id = self.video_data.get('season_id', 0)
+            
+            # 视频尺寸
+            dimension = self.video_data.get('dimension', {})
+            width = dimension.get('width', 0)
+            height = dimension.get('height', 0)
+            rotate = dimension.get('rotate', 0)
             
             # 统计数据
             stat = self.video_data.get('stat', {})
-            views = self._format_count(stat.get('view', 0))
-            likes = self._format_count(stat.get('like', 0))
-            comments = self._format_count(stat.get('reply', 0))
-            danmaku = self._format_count(stat.get('danmaku', 0))
-            favorite = self._format_count(stat.get('favorite', 0))
-            shares = self._format_count(stat.get('share', 0))
+            # 原始数值
+            view_count = stat.get('view', 0)
+            like_count = stat.get('like', 0)
+            reply_count = stat.get('reply', 0)
+            danmaku_count = stat.get('danmaku', 0)
+            coin_count = stat.get('coin', 0)
+            favorite_count = stat.get('favorite', 0)
+            share_count = stat.get('share', 0)
+            # 格式化后的数值
+            views = self._format_count(view_count)
+            likes = self._format_count(like_count)
+            comments = self._format_count(reply_count)
+            danmaku = self._format_count(danmaku_count)
+            coin = self._format_count(coin_count)
+            favorite = self._format_count(favorite_count)
+            shares = self._format_count(share_count)
+            
+            # 权限信息
+            rights = self.video_data.get('rights', {})
+            
+            # 分P信息
+            pages = self.video_data.get('pages', [])
+            pages_info = []
+            for page in pages:
+                pages_info.append({
+                    'cid': page.get('cid', 0),
+                    'page': page.get('page', 1),
+                    'part': page.get('part', ''),
+                    'duration': page.get('duration', 0),
+                    'dimension': page.get('dimension', {}),
+                    'firstFrame': page.get('first_frame', ''),
+                })
+            
+            # 字幕信息
+            subtitle_data = self.video_data.get('subtitle', {})
+            subtitles = []
+            for sub in subtitle_data.get('list', []):
+                subtitles.append({
+                    'id': sub.get('id', 0),
+                    'lan': sub.get('lan', ''),
+                    'lanDoc': sub.get('lan_doc', ''),
+                    'subtitleUrl': sub.get('subtitle_url', ''),
+                    'type': sub.get('type', 0),
+                    'aiType': sub.get('ai_type', 0),
+                    'aiStatus': sub.get('ai_status', 0),
+                })
+            
+            # 合集信息
+            ugc_season = self.video_data.get('ugc_season', {})
+            season_info = None
+            if ugc_season:
+                season_info = {
+                    'id': ugc_season.get('id', 0),
+                    'title': ugc_season.get('title', ''),
+                    'cover': ugc_season.get('cover', ''),
+                    'mid': ugc_season.get('mid', 0),
+                    'intro': ugc_season.get('intro', ''),
+                }
             
             # 视频/音频流
             video_url = ''
@@ -418,6 +491,7 @@ class BilibiliParser:
             print(f"[Bilibili] 支持清晰度: {accept_description}")
             
             return {
+                # 基础信息
                 'bvid': bvid,
                 'aid': self.aid,
                 'cid': self.cid,
@@ -429,26 +503,78 @@ class BilibiliParser:
                 'duration': duration,
                 'platform': 'bilibili',
                 
+                # 视频/音频流
                 'videoStreams': video_streams,
                 'audioStream': audio_stream,
                 
+                # 作者信息
                 'author': author,
                 'authorId': author_id,
                 'authorAvatar': author_avatar,
                 
+                # 统计数据（格式化）
                 'views': views,
                 'likes': likes,
                 'comments': comments,
                 'danmaku': danmaku,
+                'coin': coin,
                 'favorite': favorite,
                 'shares': shares,
                 
+                # 统计数据（原始数值）
+                'stat': {
+                    'view': view_count,
+                    'like': like_count,
+                    'reply': reply_count,
+                    'danmaku': danmaku_count,
+                    'coin': coin_count,
+                    'favorite': favorite_count,
+                    'share': share_count,
+                },
+                
+                # 时间信息
                 'createTime': create_time,
                 'pubdate': pubdate,
+                'ctime': ctime,
                 
+                # 分区信息
+                'tid': tid,
+                'tidV2': tid_v2,
+                'tname': tname,
+                'tnameV2': tname_v2,
+                
+                # 视频尺寸
+                'dimension': {
+                    'width': width,
+                    'height': height,
+                    'rotate': rotate,
+                },
+                
+                # 其他信息
+                'copyright': copyright_type,
+                'videosCount': videos_count,
+                'state': state,
+                'dynamic': dynamic,
+                'missionId': mission_id,
+                'seasonId': season_id,
+                
+                # 权限信息
+                'rights': rights,
+                
+                # 分P信息
+                'pages': pages_info,
+                
+                # 字幕信息
+                'subtitles': subtitles,
+                
+                # 合集信息
+                'ugcSeason': season_info,
+                
+                # 清晰度信息
                 'acceptQuality': accept_quality,
                 'acceptDescription': accept_description,
                 
+                # 下载请求头
                 'downloadHeaders': {
                     'Referer': 'https://www.bilibili.com/',
                     'Origin': 'https://www.bilibili.com',
