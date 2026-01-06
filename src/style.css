@@ -85,13 +85,26 @@
         -webkit-user-drag: none;
     }
     ::-webkit-scrollbar {
-        @apply w-1.5 h-1.5;
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb {
-        @apply rounded-md bg-(--scroller-color);
+        background: #3d3f43;
+        border-radius: 4px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
     }
     ::-webkit-scrollbar-thumb:hover {
-        @apply bg-(--primary-color);
+        background: #4a9eff;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-corner {
+        background: transparent;
     }
     ::selection {
         @apply bg-(--scroller-color);

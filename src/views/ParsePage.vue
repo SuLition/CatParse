@@ -28,6 +28,8 @@ const rewriteStyle = ref('professional');
 const customPrompt = ref('');
 const isRewriting = ref(false);
 const isExtracting = ref(false);
+const isDownloading = ref(false);
+const downloadProgress = ref(0);
 const selectedQuality = ref('');
 const qualityOptions = ref([]);
 
@@ -387,37 +389,47 @@ const handleDownload = async () => {
     return;
   }
 
+  // 开始下载
+  isDownloading.value = true;
+  downloadProgress.value = 0;
+
+  // 进度回调
+  const onProgress = (progress) => {
+    downloadProgress.value = Math.min(Math.max(progress, 0), 100);
+  };
+
   try {
     if (videoInfo.value.platform === 'bilibili') {
       await downloadBilibili(
           selectedStream.stream.url,
           `${fileName}_${selectedStream.stream.short}.mp4`,
-          () => {
-          },
+          onProgress,
           {backupUrls: selectedStream.stream.backupUrl || []}
       );
     } else if (videoInfo.value.platform === 'douyin') {
       await downloadDouyin(
           selectedStream.stream.url,
           `${fileName}_${selectedStream.stream.short}.mp4`,
-          () => {
-          },
+          onProgress,
           {backupUrls: selectedStream.stream.backupUrls || []}
       );
     } else if (videoInfo.value.platform === 'xiaohongshu') {
       await downloadXiaohongshu(
           selectedStream.stream.url,
           `${fileName}_${selectedStream.stream.short}.mp4`,
-          () => {
-          },
+          onProgress,
           {backupUrls: selectedStream.stream.backupUrls || []}
       );
     }
 
+    downloadProgress.value = 100;
     toast.success('下载完成');
   } catch (error) {
     console.error('下载失败:', error);
     toast.error('下载失败，请重试');
+  } finally {
+    isDownloading.value = false;
+    downloadProgress.value = 0;
   }
 };
 </script>
@@ -535,14 +547,14 @@ const handleDownload = async () => {
             </span>
             <span v-if="videoInfo.dimensionStr" class="meta-item">
               <svg fill="none" viewBox="0 0 24 24">
-                <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                <rect height="14" rx="2" stroke="currentColor" stroke-width="2" width="20" x="2" y="3"/>
                 <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
               </svg>
               <span>{{ videoInfo.dimensionStr }}</span>
             </span>
             <span v-if="videoInfo.pubdate" class="meta-item">
               <svg fill="none" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                <rect height="18" rx="2" stroke="currentColor" stroke-width="2" width="18" x="3" y="4"/>
                 <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
               </svg>
               <span>{{ videoInfo.pubdate }}</span>
@@ -572,7 +584,15 @@ const handleDownload = async () => {
                 class="quality-select"
                 placeholder="选择清晰度"
             />
-            <button class="download-button" @click="handleDownload">下载</button>
+            <button 
+                class="download-button" 
+                :class="{ downloading: isDownloading }" 
+                :style="isDownloading ? { '--progress': downloadProgress + '%' } : {}"
+                :disabled="isDownloading"
+                @click="handleDownload"
+            >
+              <span class="download-text">{{ isDownloading ? downloadProgress + '%' : '下载' }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -582,7 +602,7 @@ const handleDownload = async () => {
     <div v-if="videoInfo" class="copywriting-module">
       <div class="copy-left">
         <div class="copy-display-area">
-          <div v-if="copyText" class="copy-mode-indicator">
+          <div class="copy-mode-indicator">
             <span v-if="copyMode === 'original'" class="mode-tag original">原始文案</span>
             <span v-else class="mode-tag rewritten">改写后</span>
           </div>
@@ -672,8 +692,29 @@ const handleDownload = async () => {
       </div>
     </div>
 
+    <!-- 解析中动画 -->
+    <div v-if="isParsing && !videoInfo" class="parsing-state">
+      <div class="parsing-animation">
+        <div class="parsing-circle">
+          <svg class="parsing-spinner" viewBox="0 0 50 50">
+            <circle class="path" cx="25" cy="25" fill="none" r="20" stroke-width="4"/>
+          </svg>
+          <svg class="parsing-icon" fill="none" viewBox="0 0 24 24">
+            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3"
+                  stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+            <polygon fill="currentColor" points="10,8 16,12 10,16"/>
+          </svg>
+        </div>
+        <div class="parsing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <p class="parsing-text">正在解析视频信息</p>
+      <p class="parsing-hint">请稍候，正在获取视频数据...</p>
+    </div>
+
     <!-- 空状态 -->
-    <div v-if="!videoInfo" class="empty-state">
+    <div v-if="!videoInfo && !isParsing" class="empty-state">
       <svg class="empty-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path
             d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
@@ -906,6 +947,7 @@ const handleDownload = async () => {
 }
 
 .download-button {
+  position: relative;
   min-width: 100px;
   padding: 10px 24px;
   background: #4a9eff;
@@ -916,12 +958,45 @@ const handleDownload = async () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  overflow: hidden;
 }
 
-.download-button:hover {
+.download-button .download-text {
+  position: relative;
+  z-index: 2;
+}
+
+.download-button.downloading {
+  background: #3d3f43;
+  cursor: not-allowed;
+}
+
+.download-button.downloading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, #4a9eff 0%, #3d8fe8 100%);
+  transition: width 0.3s ease-out;
+  z-index: 1;
+}
+
+.download-button.downloading .download-text {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.download-button:hover:not(:disabled) {
   background: #3d8fe8;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+
+.download-button:disabled:not(.downloading) {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 底部文案模块 */
@@ -1175,5 +1250,130 @@ const handleDownload = async () => {
 .empty-text {
   font-size: 16px;
   color: #6c6e73;
+}
+
+/* 解析中动画 */
+.parsing-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.parsing-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.parsing-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.parsing-spinner {
+  width: 100%;
+  height: 100%;
+  animation: rotate 1.5s linear infinite;
+}
+
+.parsing-spinner .path {
+  stroke: #4a9eff;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+.parsing-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  color: #4a9eff;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.parsing-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.parsing-dots span {
+  width: 8px;
+  height: 8px;
+  background: #4a9eff;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.parsing-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.parsing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.parsing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.parsing-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.parsing-hint {
+  font-size: 14px;
+  color: #6c6e73;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

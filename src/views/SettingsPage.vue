@@ -1,8 +1,8 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { toast } from 'vue-sonner'
-import { loadConfig, saveConfig, checkConfig, resetConfig } from '@/services/config'
-import { selectDownloadDir, getSystemDownloadDir } from '../services/download/tauriDownload.js'
+import {ref, reactive, onMounted, onUnmounted} from 'vue'
+import {toast} from 'vue-sonner'
+import {loadConfig, saveConfig, checkConfig, resetConfig} from '@/services/config'
+import {selectDownloadDir, getSystemDownloadDir} from '../services/download/tauriDownload.js'
 import {
   generateQRCode,
   pollQRCodeStatus,
@@ -14,12 +14,12 @@ import {
 
 // 表单数据
 const form = reactive({
-  download: { savePath: '' },
-  tencentAsr: { secretId: '', secretKey: '' },
-  doubao: { apiKey: '', model: 'doubao-seed-1-6-251015' },
-  deepseek: { apiKey: '', model: 'deepseek-chat' },
-  qianwen: { apiKey: '', model: 'qwen-turbo' },
-  hunyuan: { secretId: '', secretKey: '' }
+  download: {savePath: ''},
+  tencentAsr: {secretId: '', secretKey: ''},
+  doubao: {apiKey: '', model: 'doubao-seed-1-6-251015'},
+  deepseek: {apiKey: '', model: 'deepseek-chat'},
+  qianwen: {apiKey: '', model: 'qwen-turbo'},
+  hunyuan: {secretId: '', secretKey: ''}
 })
 
 // 系统默认下载路径
@@ -112,7 +112,7 @@ const startBilibiliLogin = async () => {
     bilibiliLoginState.status = 'loading'
     bilibiliLoginState.statusText = '正在获取二维码...'
 
-    const { url, qrcode_key } = await generateQRCode()
+    const {url, qrcode_key} = await generateQRCode()
     bilibiliLoginState.qrcode = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`
     bilibiliLoginState.qrcodeKey = qrcode_key
     bilibiliLoginState.status = 'scanning'
@@ -141,7 +141,7 @@ const startPolling = () => {
           bilibiliLoginState.statusText = '登录成功'
           bilibiliLoginState.isLoggedIn = true
           bilibiliLoginState.qrcode = null
-          saveBilibiliAuth({ cookies: result.cookies })
+          saveBilibiliAuth({cookies: result.cookies})
           try {
             const userInfo = await getUserInfo()
             bilibiliLoginState.userInfo = userInfo
@@ -196,7 +196,7 @@ const refreshQRCode = () => {
 
 // 保存配置
 const saveForm = () => {
-  const success = saveConfig({ ...form })
+  const success = saveConfig({...form})
   if (success) {
     configStatus.value = checkConfig()
     toast.success('配置已保存')
@@ -235,7 +235,7 @@ onUnmounted(() => {
       <div class="settings-section download-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
             <h2>下载设置</h2>
@@ -283,8 +283,9 @@ onUnmounted(() => {
       <div class="settings-section bilibili-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon bilibili" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773H5.333zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373z"/>
+            <svg class="section-icon bilibili" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                  d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773H5.333zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373z"/>
             </svg>
             <h2>哔哩哔哩登录</h2>
           </div>
@@ -344,11 +345,11 @@ onUnmounted(() => {
       <div class="settings-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
+              <line x1="12" x2="12" y1="19" y2="23"/>
+              <line x1="8" x2="16" y1="23" y2="23"/>
             </svg>
             <h2>腾讯云 ASR</h2>
           </div>
@@ -371,7 +372,7 @@ onUnmounted(() => {
       <div class="settings-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
             <h2>豆包</h2>
@@ -395,7 +396,7 @@ onUnmounted(() => {
       <div class="settings-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"/>
               <path d="M12 16v-4"/>
               <path d="M12 8h.01"/>
@@ -421,7 +422,7 @@ onUnmounted(() => {
       <div class="settings-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/>
               <path d="M2 17l10 5 10-5"/>
               <path d="M2 12l10 5 10-5"/>
@@ -447,7 +448,7 @@ onUnmounted(() => {
       <div class="settings-section">
         <div class="section-header">
           <div class="section-title-row">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
               <path d="M12 6v6l4 2"/>
             </svg>
@@ -476,7 +477,7 @@ onUnmounted(() => {
 
       <!-- 关于 -->
       <div class="about-section">
-        <p class="about-text">文案小助手 v0.1.0</p>
+        <p class="about-text">文案助手 v0.1.0</p>
         <p class="about-text">支持多平台视频解析与下载</p>
       </div>
     </div>
