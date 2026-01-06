@@ -18,12 +18,17 @@ async function getSaveDir() {
   
   // 优先使用用户配置的下载路径
   const downloadConfig = getServiceConfig('download')
-  if (downloadConfig.savePath) {
+  console.log('[getSaveDir] downloadConfig:', downloadConfig)
+  
+  if (downloadConfig && downloadConfig.savePath) {
+    console.log('[getSaveDir] 使用用户配置路径:', downloadConfig.savePath)
     return downloadConfig.savePath
   }
   
   // 否则使用系统默认下载目录
-  return await invoke('get_download_dir')
+  const defaultDir = await invoke('get_download_dir')
+  console.log('[getSaveDir] 使用系统默认路径:', defaultDir)
+  return defaultDir
 }
 
 /**

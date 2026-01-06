@@ -1,7 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { toast } from 'vue-sonner'
-import { loadConfig, saveConfig, checkConfig, resetConfig } from '@/services/config'
+import { loadConfig, saveConfig, checkConfig } from '@/services/config'
 
 // 表单数据
 const form = reactive({
@@ -32,26 +31,11 @@ const loadForm = () => {
   configStatus.value = checkConfig()
 }
 
-// 保存配置
-const saveForm = () => {
+// 失去焦点时保存配置
+const onBlurSave = () => {
   const config = loadConfig()
-  const success = saveConfig({ ...config, ...form })
-  if (success) {
-    configStatus.value = checkConfig()
-    toast.success('配置已保存')
-  }
-}
-
-// 重置配置
-const resetForm = () => {
-  const config = resetConfig()
-  Object.keys(form).forEach(key => {
-    if (config[key]) {
-      Object.assign(form[key], config[key])
-    }
-  })
+  saveConfig({ ...config, ...form })
   configStatus.value = checkConfig()
-  toast.info('配置已重置')
 }
 
 onMounted(() => {
@@ -78,11 +62,11 @@ onMounted(() => {
       <div class="api-form">
         <div class="form-field">
           <label>SecretId</label>
-          <input v-model="form.tencentAsr.secretId" placeholder="SecretId" type="text"/>
+          <input v-model="form.tencentAsr.secretId" placeholder="SecretId" type="text" @blur="onBlurSave"/>
         </div>
         <div class="form-field">
           <label>SecretKey</label>
-          <input v-model="form.tencentAsr.secretKey" placeholder="SecretKey" type="text"/>
+          <input v-model="form.tencentAsr.secretKey" placeholder="SecretKey" type="text" @blur="onBlurSave"/>
         </div>
       </div>
     </div>
@@ -101,11 +85,11 @@ onMounted(() => {
       <div class="api-form">
         <div class="form-field flex-2">
           <label>API Key</label>
-          <input v-model="form.doubao.apiKey" placeholder="API Key" type="text"/>
+          <input v-model="form.doubao.apiKey" placeholder="API Key" type="text" @blur="onBlurSave"/>
         </div>
         <div class="form-field">
           <label>模型</label>
-          <input v-model="form.doubao.model" placeholder="模型ID" type="text"/>
+          <input v-model="form.doubao.model" placeholder="模型ID" type="text" @blur="onBlurSave"/>
         </div>
       </div>
     </div>
@@ -126,11 +110,11 @@ onMounted(() => {
       <div class="api-form">
         <div class="form-field flex-2">
           <label>API Key</label>
-          <input v-model="form.deepseek.apiKey" placeholder="API Key" type="text"/>
+          <input v-model="form.deepseek.apiKey" placeholder="API Key" type="text" @blur="onBlurSave"/>
         </div>
         <div class="form-field">
           <label>模型</label>
-          <input v-model="form.deepseek.model" placeholder="模型ID" type="text"/>
+          <input v-model="form.deepseek.model" placeholder="模型ID" type="text" @blur="onBlurSave"/>
         </div>
       </div>
     </div>
@@ -151,11 +135,11 @@ onMounted(() => {
       <div class="api-form">
         <div class="form-field flex-2">
           <label>API Key</label>
-          <input v-model="form.qianwen.apiKey" placeholder="API Key" type="text"/>
+          <input v-model="form.qianwen.apiKey" placeholder="API Key" type="text" @blur="onBlurSave"/>
         </div>
         <div class="form-field">
           <label>模型</label>
-          <input v-model="form.qianwen.model" placeholder="模型ID" type="text"/>
+          <input v-model="form.qianwen.model" placeholder="模型ID" type="text" @blur="onBlurSave"/>
         </div>
       </div>
     </div>
@@ -175,18 +159,13 @@ onMounted(() => {
       <div class="api-form">
         <div class="form-field">
           <label>SecretId</label>
-          <input v-model="form.hunyuan.secretId" placeholder="SecretId" type="text"/>
+          <input v-model="form.hunyuan.secretId" placeholder="SecretId" type="text" @blur="onBlurSave"/>
         </div>
         <div class="form-field">
           <label>SecretKey</label>
-          <input v-model="form.hunyuan.secretKey" placeholder="SecretKey" type="text"/>
+          <input v-model="form.hunyuan.secretKey" placeholder="SecretKey" type="text" @blur="onBlurSave"/>
         </div>
       </div>
-    </div>
-
-    <div class="api-actions">
-      <button class="btn btn-secondary" @click="resetForm">重置</button>
-      <button class="btn btn-primary" @click="saveForm">保存配置</button>
     </div>
   </div>
 </template>
@@ -301,47 +280,5 @@ onMounted(() => {
 
 .form-field input::placeholder {
   color: var(--text-tertiary, #6c6e73);
-}
-
-.api-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-primary, #3d3f43);
-}
-
-/* 按钮 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--accent-color, #4a9eff);
-  color: #ffffff;
-}
-
-.btn-primary:hover {
-  background: var(--accent-hover, #3d8fe8);
-}
-
-.btn-secondary {
-  background: var(--bg-tertiary, #3d3f43);
-  color: var(--text-primary, #ffffff);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-hover, #4a4c50);
 }
 </style>

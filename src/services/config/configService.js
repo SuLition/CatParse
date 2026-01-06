@@ -57,7 +57,8 @@ export function loadConfig() {
  * @returns {boolean} 是否成功
  */
 export function saveConfig(config) {
-  currentConfig = { ...config }
+  // 深拷贝配置对象，避免引用问题
+  currentConfig = JSON.parse(JSON.stringify(config))
   return setItem(STORAGE_KEYS.APP_CONFIG, config)
 }
 

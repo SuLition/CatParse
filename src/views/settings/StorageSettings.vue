@@ -1,7 +1,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { loadConfig, saveConfig } from '@/services/config'
+import { toast } from 'vue-sonner'
+import { loadConfig, saveConfig, resetConfig } from '@/services/config'
 import { selectDownloadDir, getSystemDownloadDir } from '@/services/download/tauriDownload.js'
+import { getHistory, clearHistory } from '@/services/storage'
+import { clearBilibiliAuth, loadBilibiliAuth } from '@/services/auth/bilibiliAuth'
+import { STORAGE_KEYS } from '@/constants/storage'
 
 // 系统默认下载路径
 const defaultDownloadPath = ref('')
@@ -10,6 +14,68 @@ const defaultDownloadPath = ref('')
 const form = reactive({
   download: { savePath: '' }
 })
+
+// 缓存大小
+const cacheSize = reactive({
+  downloadHistory: '0 B',
+  bilibiliAuth: '0 B',
+  appConfig: '0 B',
+  theme: '0 B'
+})
+
+// 格式化字节大小
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// 计算存储项大小
+const getStorageSize = (key) => {
+  const item = localStorage.getItem(key)
+  return item ? new Blob([item]).size : 0
+}
+
+// 加载缓存大小
+const loadCacheSize = () => {
+  cacheSize.downloadHistory = formatBytes(getStorageSize(STORAGE_KEYS.DOWNLOAD_HISTORY))
+  cacheSize.bilibiliAuth = formatBytes(getStorageSize('bilibili_auth'))
+  cacheSize.appConfig = formatBytes(getStorageSize(STORAGE_KEYS.APP_CONFIG))
+  cacheSize.theme = formatBytes(
+    getStorageSize(STORAGE_KEYS.THEME) + getStorageSize(STORAGE_KEYS.WINDOW_EFFECT)
+  )
+}
+
+// 清除下载历史
+const clearDownloadHistory = () => {
+  clearHistory()
+  loadCacheSize()
+  toast.success('下载历史已清除')
+}
+
+// 清除B站登录信息
+const clearBiliAuth = () => {
+  clearBilibiliAuth()
+  loadCacheSize()
+  toast.success('B站登录信息已清除')
+}
+
+// 重置应用配置
+const resetAppConfig = () => {
+  resetConfig()
+  loadCacheSize()
+  toast.success('应用配置已重置')
+}
+
+// 清除主题缓存
+const clearThemeCache = () => {
+  localStorage.removeItem(STORAGE_KEYS.THEME)
+  localStorage.removeItem(STORAGE_KEYS.WINDOW_EFFECT)
+  loadCacheSize()
+  toast.success('主题缓存已清除')
+}
 
 // 选择下载目录
 const selectDownloadPath = async () => {
@@ -47,6 +113,9 @@ const loadForm = async () => {
   } catch (e) {
     console.warn('获取默认下载路径失败:', e)
   }
+
+  // 加载缓存大小
+  loadCacheSize()
 }
 
 onMounted(() => {
@@ -56,6 +125,7 @@ onMounted(() => {
 
 <template>
   <div class="settings-panel">
+    <!-- 下载目录 -->
     <div class="setting-group">
       <div class="setting-item">
         <div class="setting-row">
@@ -81,6 +151,73 @@ onMounted(() => {
         </div>
       </div>
       <p class="setting-hint">{{ form.download.savePath || '当前使用系统默认下载目录' }}</p>
+    </div>
+
+    <!-- 缓存清理 -->
+    <div class="cache-section">
+      <div class="section-header">
+        <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7"/>
+          <ellipse cx="12" cy="7" rx="8" ry="4"/>
+          <path d="M4 12c0 2.21 3.582 4 8 4s8-1.79 8-4"/>
+        </svg>
+        <span class="section-title">缓存</span>
+      </div>
+      <p class="section-desc">数据库存储配置、登录信息、下载记录等数据。</p>
+
+      <div class="cache-list">
+        <!-- 下载历史 -->
+        <div class="cache-item">
+          <span class="cache-name">下载历史</span>
+          <div class="cache-control">
+            <input class="cache-input" :value="cacheSize.downloadHistory" readonly />
+            <button class="cache-clear-btn" title="清除" @click="clearDownloadHistory">
+              <svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- B站登录信息 -->
+        <div class="cache-item">
+          <span class="cache-name">B站登录</span>
+          <div class="cache-control">
+            <input class="cache-input" :value="cacheSize.bilibiliAuth" readonly />
+            <button class="cache-clear-btn" title="清除" @click="clearBiliAuth">
+              <svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 主题缓存 -->
+        <div class="cache-item">
+          <span class="cache-name">主题设置</span>
+          <div class="cache-control">
+            <input class="cache-input" :value="cacheSize.theme" readonly />
+            <button class="cache-clear-btn" title="清除" @click="clearThemeCache">
+              <svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 应用配置 -->
+        <div class="cache-item">
+          <span class="cache-name">应用配置</span>
+          <div class="cache-control">
+            <input class="cache-input" :value="cacheSize.appConfig" readonly />
+            <button class="cache-clear-btn" title="重置" @click="resetAppConfig">
+              <svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -177,5 +314,92 @@ onMounted(() => {
 .btn-icon:hover {
   background: var(--bg-hover, #4a4c50);
   color: var(--text-primary, #ffffff);
+}
+
+/* 缓存清理区域 */
+.cache-section {
+  margin-top: 8px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-tertiary, #6c6e73);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+}
+
+.section-desc {
+  font-size: 12px;
+  color: var(--text-tertiary, #6c6e73);
+  margin: 0 0 16px 32px;
+}
+
+.cache-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-left: 32px;
+}
+
+.cache-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cache-name {
+  font-size: 13px;
+  color: var(--text-secondary, #afb1b3);
+}
+
+.cache-control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.cache-input {
+  width: 100px;
+  padding: 6px 12px;
+  background: var(--bg-secondary, #2b2d30);
+  border: 1px solid var(--border-primary, #3d3f43);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  color: var(--text-primary, #ffffff);
+  font-size: 13px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.cache-clear-btn {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary, #3d3f43);
+  border: 1px solid var(--border-primary, #3d3f43);
+  border-radius: 0 6px 6px 0;
+  color: var(--accent-color, #4a9eff);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cache-clear-btn:hover {
+  background: var(--accent-color, #4a9eff);
+  border-color: var(--accent-color, #4a9eff);
+  color: #ffffff;
 }
 </style>
