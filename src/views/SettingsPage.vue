@@ -11,6 +11,24 @@ import {
   loadBilibiliAuth,
   clearBilibiliAuth
 } from '../services/auth/bilibiliAuth.js'
+import { setWindowEffect, useWindowEffect } from '@/services/theme'
+import CustomSelect from '../components/common/CustomSelect.vue'
+
+// 窗口效果选项
+const WINDOW_EFFECT_OPTIONS = [
+  { value: 'none', label: '无效果' },
+  { value: 'mica', label: 'Mica (云母)' },
+  { value: 'acrylic', label: 'Acrylic (亚克力)' }
+]
+
+// 窗口效果
+const windowEffect = useWindowEffect()
+
+// 切换窗口效果
+const onWindowEffectChange = async (effect) => {
+  await setWindowEffect(effect)
+  toast.success(`窗口效果已切换为 ${WINDOW_EFFECT_OPTIONS.find(o => o.value === effect)?.label || effect}`)
+}
 
 // 表单数据
 const form = reactive({
@@ -230,6 +248,33 @@ onUnmounted(() => {
   <div class="settings-page">
     <div class="settings-container">
       <h1 class="page-title">设置</h1>
+
+      <!-- 外观设置 -->
+      <div class="settings-section appearance-section">
+        <div class="section-header">
+          <div class="section-title-row">
+            <svg class="section-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a10 10 0 0 1 0 20 10 10 0 0 1 0-20"/>
+              <path d="M12 2v20"/>
+            </svg>
+            <h2>外观设置</h2>
+          </div>
+          <span class="section-desc">窗口效果和视觉风格</span>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <label class="setting-label">窗口效果</label>
+            <p class="setting-desc">Windows 11 原生毛玻璃效果（需要 Win11 22H2+）</p>
+          </div>
+          <CustomSelect
+              v-model="windowEffect"
+              :options="WINDOW_EFFECT_OPTIONS"
+              class="effect-select"
+              @change="onWindowEffectChange"
+          />
+        </div>
+      </div>
 
       <!-- 下载设置 -->
       <div class="settings-section download-section">
@@ -725,6 +770,16 @@ onUnmounted(() => {
 .download-section {
   background: linear-gradient(135deg, rgba(74, 158, 255, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   border-color: rgba(74, 158, 255, 0.2);
+}
+
+/* 外观设置特殊样式 */
+.appearance-section {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.effect-select {
+  width: 180px;
 }
 
 /* B站登录特殊样式 */

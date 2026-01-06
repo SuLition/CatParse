@@ -9,6 +9,9 @@ use std::sync::Mutex;
 use tauri::Emitter;
 use tauri::Manager;
 
+#[cfg(target_os = "windows")]
+use window_vibrancy::{apply_mica, apply_acrylic, clear_acrylic, clear_mica};
+
 // 全局后端服务进程句柄
 static BACKEND_SERVICE: Mutex<Option<Child>> = Mutex::new(None);
 
@@ -662,6 +665,52 @@ async fn start_backend(app: tauri::AppHandle) -> Result<String, String> {
     }
 }
 
+/// 设置窗口效果（毛玻璃等）
+/// effect: "none" | "mica" | "acrylic" | "mica_dark" | "acrylic_dark"
+/// is_dark: 是否为暗色主题
+#[tauri::command]
+async fn set_window_effect(
+    window: tauri::Window,
+    effect: String,
+    is_dark: bool,
+) -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        // 先清除现有效果
+        let _ = clear_mica(&window);
+        let _ = clear_acrylic(&window);
+        
+        match effect.as_str() {
+            "mica" => {
+                apply_mica(&window, Some(is_dark))
+                    .map_err(|e| format!("应用 Mica 效果失败: {}", e))?;
+                Ok("Mica 效果已应用".to_string())
+            }
+            "acrylic" => {
+                // Acrylic 效果需要设置背景色
+                let color = if is_dark {
+                    [30, 31, 34, 200] // 暗色半透明
+                } else {
+                    [255, 255, 255, 200] // 亮色半透明
+                };
+                apply_acrylic(&window, Some(color))
+                    .map_err(|e| format!("应用 Acrylic 效果失败: {}", e))?;
+                Ok("Acrylic 效果已应用".to_string())
+            }
+            "none" | _ => {
+                // 无效果，使用纯色背景
+                Ok("已清除窗口效果".to_string())
+            }
+        }
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        // 非 Windows 平台不支持
+        Ok("当前平台不支持窗口效果".to_string())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -709,7 +758,8 @@ pub fn run() {
             open_folder, 
             fetch_data, 
             resolve_redirect,
-            start_backend
+            start_backend,
+            set_window_effect
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

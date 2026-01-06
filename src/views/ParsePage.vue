@@ -453,7 +453,17 @@ const handleDownload = async () => {
       />
 
       <button :disabled="isParsing" class="parse-button" @click="handleParse">
-        {{ isParsing ? '解析中...' : '解析' }}
+        <svg v-if="!isParsing" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <svg v-else class="spin" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+        </svg>
+        <span>{{ isParsing ? '解析中...' : '解析' }}</span>
       </button>
     </div>
 
@@ -584,13 +594,22 @@ const handleDownload = async () => {
                 class="quality-select"
                 placeholder="选择清晰度"
             />
-            <button 
-                class="download-button" 
-                :class="{ downloading: isDownloading }" 
-                :style="isDownloading ? { '--progress': downloadProgress + '%' } : {}"
+            <button
+                :class="{ downloading: isDownloading }"
                 :disabled="isDownloading"
+                :style="isDownloading ? { '--progress': downloadProgress + '%' } : {}"
+                class="download-button"
                 @click="handleDownload"
             >
+              <svg v-if="!isDownloading" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect height="16" rx="2" stroke="currentColor" stroke-width="2" width="20" x="2" y="4"/>
+                <path d="M2 8h20M2 16h20M6 4v4M6 16v4M18 4v4M18 16v4" stroke="currentColor" stroke-linecap="round"
+                      stroke-width="2"/>
+              </svg>
+              <svg v-else class="spin" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+              </svg>
               <span class="download-text">{{ isDownloading ? downloadProgress + '%' : '下载' }}</span>
             </button>
           </div>
@@ -616,10 +635,10 @@ const handleDownload = async () => {
                 @click="handleExtractCopy"
             >
               <svg v-if="!isExtracting" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor"
-                      stroke-linecap="round" stroke-width="2"/>
-                <path d="M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" stroke="currentColor"
-                      stroke-width="2"/>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 9V15" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                <path d="M12 7V17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                <path d="M16 9V15" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
               </svg>
               <svg v-else class="spin" fill="none" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="2"/>
@@ -780,6 +799,10 @@ const handleDownload = async () => {
 }
 
 .parse-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 100px;
   padding: 10px 24px;
   background: var(--accent-color, #4a9eff);
@@ -790,6 +813,16 @@ const handleDownload = async () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+}
+
+.parse-button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.parse-button svg.spin {
+  animation: spin 1s linear infinite;
 }
 
 .parse-button:hover:not(:disabled) {
@@ -950,6 +983,10 @@ const handleDownload = async () => {
 
 .download-button {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 100px;
   padding: 10px 24px;
   background: var(--accent-color, #4a9eff);
@@ -961,6 +998,18 @@ const handleDownload = async () => {
   cursor: pointer;
   transition: all 0.3s;
   overflow: hidden;
+}
+
+.download-button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.download-button svg.spin {
+  animation: spin 1s linear infinite;
 }
 
 .download-button .download-text {

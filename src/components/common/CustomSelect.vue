@@ -2,6 +2,7 @@
   <div class="custom-select" :class="{ open: isOpen, disabled: disabled }" ref="selectRef">
     <div class="select-trigger" @click="toggle">
       <span class="select-value" :class="{ placeholder: !modelValue }">
+        <span v-if="selectedOption?.icon" class="option-icon" v-html="selectedOption.icon"></span>
         {{ displayValue }}
       </span>
       <svg class="select-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,6 +23,7 @@
             }"
             @click="selectOption(option)"
           >
+            <span v-if="option.icon" class="option-icon" v-html="option.icon"></span>
             {{ option.label }}
           </div>
         </div>
@@ -64,6 +66,10 @@ const displayValue = computed(() => {
   }
   const selected = props.options.find(opt => opt.value === props.modelValue);
   return selected ? selected.label : props.placeholder;
+});
+
+const selectedOption = computed(() => {
+  return props.options.find(opt => opt.value === props.modelValue);
 });
 
 const toggle = () => {
@@ -134,6 +140,9 @@ onUnmounted(() => {
 
 .select-value {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text-primary, #ffffff);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -194,6 +203,9 @@ onUnmounted(() => {
 }
 
 .select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   color: var(--text-secondary, #d4d4d4);
   cursor: pointer;
@@ -202,6 +214,20 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.option-icon :deep(svg) {
+  width: 16px;
+  height: 16px;
 }
 
 .select-option:hover {

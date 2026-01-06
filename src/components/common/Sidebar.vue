@@ -1,7 +1,7 @@
 <script setup>
 import {ref, computed} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
-import { toggleTheme, useAppliedTheme } from '@/services/theme';
+import {toggleTheme, useAppliedTheme} from '@/services/theme';
 
 const router = useRouter();
 const route = useRoute();
@@ -77,21 +77,24 @@ const handleToggleTheme = () => {
     <div class="sidebar-menu-bottom">
       <!-- 主题切换按钮 -->
       <div
-          class="sidebar-item theme-toggle"
           :title="isDark ? '切换亮色' : '切换暗色'"
+          class="sidebar-item theme-toggle"
           @click="handleToggleTheme"
       >
         <!-- 月亮图标 (暗色模式) -->
         <svg v-if="isDark" class="sidebar-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round" stroke-width="2"/>
         </svg>
         <!-- 太阳图标 (亮色模式) -->
         <svg v-else class="sidebar-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
-          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+          <path
+              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+              stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
         </svg>
       </div>
-      
+
       <div
           v-for="item in bottomMenuItems"
           :key="item.id"
@@ -126,8 +129,8 @@ const handleToggleTheme = () => {
 }
 
 .sidebar-logo {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -154,7 +157,7 @@ const handleToggleTheme = () => {
 .sidebar-menu-top {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   align-items: center;
 }
@@ -172,8 +175,8 @@ const handleToggleTheme = () => {
 }
 
 .sidebar-item {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;

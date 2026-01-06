@@ -7,12 +7,16 @@ import { ref, watch } from 'vue'
 import { getItem, setItem } from '../storage/localStorage'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { THEME_MODES, DARK_THEME, LIGHT_THEME } from '@/constants/theme'
+import { invoke } from '@tauri-apps/api/core'
 
 // 当前主题模式 (light / dark / system)
 const themeMode = ref(THEME_MODES.DARK)
 
 // 实际应用的主题 (light / dark)
 const appliedTheme = ref(THEME_MODES.DARK)
+
+// 窗口效果 (none / mica / acrylic)
+const windowEffect = ref('none')
 
 // 系统主题媒体查询
 let systemThemeQuery = null
@@ -34,7 +38,7 @@ function getSystemTheme() {
  * 应用主题到 DOM
  * @param {'light' | 'dark'} theme
  */
-function applyThemeToDOM(theme) {
+async function applyThemeToDOM(theme) {
   const root = document.documentElement
   const themeVars = theme === THEME_MODES.LIGHT ? LIGHT_THEME : DARK_THEME
   
@@ -49,15 +53,39 @@ function applyThemeToDOM(theme) {
   
   // 更新实际应用的主题
   appliedTheme.value = theme
+  
+  // 应用窗口效果
+  await applyWindowEffect(windowEffect.value, theme === THEME_MODES.DARK)
+}
+
+/**
+ * 应用窗口效果
+ * @param {'none' | 'mica' | 'acrylic'} effect
+ * @param {boolean} isDark
+ */
+async function applyWindowEffect(effect, isDark) {
+  try {
+    const result = await invoke('set_window_effect', {
+      effect: effect,
+      isDark: isDark
+    })
+    console.log('[WindowEffect]', result)
+  } catch (error) {
+    console.warn('[窗口效果] 设置失败:', error)
+  }
 }
 
 /**
  * 初始化主题
  */
-export function initTheme() {
+export async function initTheme() {
   // 从存储加载主题设置
   const savedMode = getItem(STORAGE_KEYS.THEME, THEME_MODES.DARK)
   themeMode.value = savedMode
+  
+  // 加载窗口效果设置
+  const savedEffect = getItem(STORAGE_KEYS.WINDOW_EFFECT, 'none')
+  windowEffect.value = savedEffect
   
   // 计算实际主题
   const actualTheme = savedMode === THEME_MODES.SYSTEM 
@@ -65,7 +93,7 @@ export function initTheme() {
     : savedMode
   
   // 应用主题
-  applyThemeToDOM(actualTheme)
+  await applyThemeToDOM(actualTheme)
   
   // 监听系统主题变化
   if (typeof window !== 'undefined' && window.matchMedia) {
@@ -87,7 +115,7 @@ function handleSystemThemeChange(e) {
  * 设置主题模式
  * @param {'light' | 'dark' | 'system'} mode
  */
-export function setTheme(mode) {
+export async function setTheme(mode) {
   themeMode.value = mode
   setItem(STORAGE_KEYS.THEME, mode)
   
@@ -95,18 +123,36 @@ export function setTheme(mode) {
     ? getSystemTheme() 
     : mode
   
-  applyThemeToDOM(actualTheme)
+  await applyThemeToDOM(actualTheme)
+}
+
+/**
+ * 设置窗口效果
+ * @param {'none' | 'mica' | 'acrylic'} effect
+ */
+export async function setWindowEffect(effect) {
+  windowEffect.value = effect
+  setItem(STORAGE_KEYS.WINDOW_EFFECT, effect)
+  await applyWindowEffect(effect, appliedTheme.value === THEME_MODES.DARK)
+}
+
+/**
+ * 获取当前窗口效果
+ * @returns {Ref<string>}
+ */
+export function useWindowEffect() {
+  return windowEffect
 }
 
 /**
  * 切换主题（在亮色和暗色之间切换）
  */
-export function toggleTheme() {
+export async function toggleTheme() {
   const newTheme = appliedTheme.value === THEME_MODES.DARK 
     ? THEME_MODES.LIGHT 
     : THEME_MODES.DARK
   
-  setTheme(newTheme)
+  await setTheme(newTheme)
 }
 
 /**
@@ -139,5 +185,7 @@ export default {
   toggleTheme,
   useThemeMode,
   useAppliedTheme,
-  isDarkTheme
+  isDarkTheme,
+  setWindowEffect,
+  useWindowEffect
 }

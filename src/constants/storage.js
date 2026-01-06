@@ -15,7 +15,10 @@ export const STORAGE_KEYS = {
   USER_AUTH: 'wenan_user_auth',
   
   // 主题设置
-  THEME: 'wenan_theme'
+  THEME: 'wenan_theme',
+  
+  // 窗口效果
+  WINDOW_EFFECT: 'wenan_window_effect'
 }
 
 // 历史记录相关配置

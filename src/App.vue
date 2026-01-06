@@ -58,6 +58,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-gradient);
+  transition: background 0.3s ease;
 }
 
 @keyframes spin {
