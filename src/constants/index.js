@@ -10,3 +10,6 @@ export * from './platforms'
 
 // 存储键名常量
 export * from './storage'
+
+// 主题相关常量
+export * from './theme'

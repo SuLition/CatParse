@@ -1,11 +1,14 @@
 <script setup>
 import {ref, computed} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
+import { toggleTheme, useAppliedTheme } from '@/services/theme';
 
 const router = useRouter();
 const route = useRoute();
 
 const activeTab = computed(() => route.path);
+const appliedTheme = useAppliedTheme();
+const isDark = computed(() => appliedTheme.value === 'dark');
 
 const topMenuItems = [
   {id: '/parse', icon: 'search', title: '视频解析'},
@@ -19,6 +22,10 @@ const bottomMenuItems = [
 const handleMenuClick = (path) => {
   router.push(path);
   console.log('切换到:', path);
+};
+
+const handleToggleTheme = () => {
+  toggleTheme();
 };
 </script>
 
@@ -68,6 +75,23 @@ const handleMenuClick = (path) => {
 
     <!-- 底部菜单 -->
     <div class="sidebar-menu-bottom">
+      <!-- 主题切换按钮 -->
+      <div
+          class="sidebar-item theme-toggle"
+          :title="isDark ? '切换亮色' : '切换暗色'"
+          @click="handleToggleTheme"
+      >
+        <!-- 月亮图标 (暗色模式) -->
+        <svg v-if="isDark" class="sidebar-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <!-- 太阳图标 (亮色模式) -->
+        <svg v-else class="sidebar-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+        </svg>
+      </div>
+      
       <div
           v-for="item in bottomMenuItems"
           :key="item.id"
@@ -92,12 +116,13 @@ const handleMenuClick = (path) => {
 .sidebar {
   width: 60px;
   height: 100vh;
-  background: #2b2d30;
+  background: var(--bg-secondary, #2b2d30);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 16px 0;
-  border-right: 1px solid #3d3f43;
+  border-right: 1px solid var(--border-primary, #3d3f43);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-logo {
@@ -112,7 +137,7 @@ const handleMenuClick = (path) => {
 .logo-box {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #4a9eff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--accent-color, #4a9eff) 0%, #a855f7 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -155,18 +180,23 @@ const handleMenuClick = (path) => {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
   position: relative;
 }
 
 .sidebar-item:hover {
-  background: #3d3f43;
-  color: #ffffff;
+  background: var(--bg-tertiary, #3d3f43);
+  color: var(--text-primary, #ffffff);
 }
 
 .sidebar-item.active {
-  background: #1f5c87;
+  background: var(--accent-color, #4a9eff);
   color: #ffffff;
+}
+
+.sidebar-item.theme-toggle:hover {
+  background: var(--accent-light, rgba(74, 158, 255, 0.15));
+  color: var(--accent-color, #4a9eff);
 }
 
 .sidebar-icon {

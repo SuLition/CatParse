@@ -1,10 +1,16 @@
 <script setup>
+import {onMounted} from 'vue'
 import {Toaster} from 'vue-sonner'
 import CloseMask from "./components/common/CloseMask.vue";
 import {toasterOptions} from "./utils/index.js";
 import TitleBar from "./components/common/TitleBar.vue";
 import Sidebar from "./components/common/Sidebar.vue";
+import {initTheme} from './services/theme'
 
+// 初始化主题
+onMounted(() => {
+  initTheme()
+})
 </script>
 
 <template>
@@ -12,11 +18,9 @@ import Sidebar from "./components/common/Sidebar.vue";
     <Sidebar/>
     <div class="main-content">
       <TitleBar/>
-      <router-view />
-      <!--<VideoParser />-->
+      <router-view/>
       <!-- 消息通知 -->
       <Toaster v-bind="toasterOptions"/>
-
       <!-- 关闭提示遮罩层 -->
       <CloseMask/>
     </div>
@@ -31,11 +35,12 @@ import Sidebar from "./components/common/Sidebar.vue";
 }
 
 html, body, #app {
-  background: #1e1f22;
+  background: var(--bg-primary, #1e1f22);
   min-height: 100vh;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 body {
@@ -66,9 +71,9 @@ select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: #1e1f22;
-  color: #ffffff;
-  border: 1px solid #3d3f43;
+  background-color: var(--bg-primary, #1e1f22);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
   padding: 8px 32px 8px 12px;
   font-size: 14px;
@@ -81,23 +86,24 @@ select {
 }
 
 select:hover {
-  border-color: #4a9eff;
+  border-color: var(--accent-color, #4a9eff);
 }
 
 select:focus {
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.15);
+  border-color: var(--accent-color, #4a9eff);
+  box-shadow: 0 0 0 2px var(--accent-light, rgba(74, 158, 255, 0.15));
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 select option {
-  background-color: #2b2d30;
-  color: #ffffff;
+  background-color: var(--bg-secondary, #2b2d30);
+  color: var(--text-primary, #ffffff);
   padding: 10px 12px;
 }
 
 select option:hover,
 select option:checked {
-  background-color: #4a9eff;
+  background-color: var(--accent-color, #4a9eff);
   color: #ffffff;
 }
 

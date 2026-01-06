@@ -97,24 +97,24 @@ const clearAll = () => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin: 0;
 }
 
 .clear-button {
   padding: 8px 16px;
   background: transparent;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .clear-button:hover {
-  background: #3d3f43;
-  color: #ffffff;
+  background: var(--bg-tertiary, #3d3f43);
+  color: var(--text-primary, #ffffff);
 }
 
 .empty-state {
@@ -129,12 +129,12 @@ const clearAll = () => {
 .empty-icon {
   width: 64px;
   height: 64px;
-  color: #3d3f43;
+  color: var(--text-tertiary, #3d3f43);
 }
 
 .empty-text {
   font-size: 16px;
-  color: #6c6e73;
+  color: var(--text-secondary, #6c6e73);
 }
 
 .history-list {
@@ -144,16 +144,16 @@ const clearAll = () => {
 }
 
 .history-item {
-  background: #2b2d30;
-  border: 1px solid #3d3f43;
+  background: var(--bg-secondary, #2b2d30);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 8px;
   padding: 20px;
   transition: all 0.3s;
 }
 
 .history-item:hover {
-  border-color: #4a9eff;
-  box-shadow: 0 2px 8px rgba(74, 158, 255, 0.1);
+  border-color: var(--accent-color, #4a9eff);
+  box-shadow: 0 2px 8px var(--accent-light, rgba(74, 158, 255, 0.1));
 }
 
 .item-header {
@@ -173,7 +173,7 @@ const clearAll = () => {
 
 .download-time {
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 .item-content {
@@ -183,13 +183,13 @@ const clearAll = () => {
 .item-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin: 0 0 8px 0;
 }
 
 .item-url {
   font-size: 13px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,12 +201,12 @@ const clearAll = () => {
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #3d3f43;
+  border-top: 1px solid var(--border-primary, #3d3f43);
 }
 
 .file-size {
   font-size: 13px;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
 }
 
 .item-actions {
@@ -219,9 +219,9 @@ const clearAll = () => {
   height: 32px;
   padding: 0;
   background: transparent;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -235,8 +235,8 @@ const clearAll = () => {
 }
 
 .action-button:hover {
-  background: #3d3f43;
-  color: #ffffff;
+  background: var(--bg-tertiary, #3d3f43);
+  color: var(--text-primary, #ffffff);
 }
 
 .action-button.delete:hover {

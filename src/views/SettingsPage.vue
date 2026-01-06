@@ -489,7 +489,7 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background: #1e1f22;
+  background: var(--bg-primary, #1e1f22);
 }
 
 .settings-container {
@@ -500,7 +500,7 @@ onUnmounted(() => {
 .page-title {
   font-size: 24px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 24px;
 }
 
@@ -508,9 +508,9 @@ onUnmounted(() => {
 .settings-section {
   margin-bottom: 20px;
   padding: 20px;
-  background: #2b2d30;
+  background: var(--bg-secondary, #2b2d30);
   border-radius: 8px;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
 }
 
 .section-header {
@@ -530,14 +530,14 @@ onUnmounted(() => {
 .section-title-row h2 {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin: 0;
 }
 
 .section-icon {
   width: 20px;
   height: 20px;
-  color: #4a9eff;
+  color: var(--accent-color, #4a9eff);
 }
 
 .section-icon.bilibili {
@@ -546,14 +546,14 @@ onUnmounted(() => {
 
 .section-desc {
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #3d3f43;
+  background: var(--bg-tertiary, #3d3f43);
   margin-left: auto;
 }
 
@@ -579,13 +579,13 @@ onUnmounted(() => {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 4px;
 }
 
 .setting-desc {
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
   margin: 0;
 }
 
@@ -611,29 +611,29 @@ onUnmounted(() => {
 .form-group label {
   display: block;
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
   margin-bottom: 6px;
 }
 
 .form-group input {
   width: 100%;
   padding: 10px 12px;
-  background: #1e1f22;
-  border: 1px solid #3d3f43;
+  background: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 14px;
   outline: none;
   transition: all 0.2s;
 }
 
 .form-group input:focus {
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+  border-color: var(--accent-color, #4a9eff);
+  box-shadow: 0 0 0 2px var(--accent-light, rgba(74, 158, 255, 0.1));
 }
 
 .form-group input::placeholder {
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 /* 路径输入 */
@@ -647,17 +647,17 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   padding: 10px 12px;
-  background: #1e1f22;
-  border: 1px solid #3d3f43;
+  background: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 14px;
   cursor: default;
 }
 
 .path-hint {
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
   margin-top: 8px;
 }
 
@@ -677,21 +677,21 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: #3d3f43;
-  color: #ffffff;
+  background: var(--bg-tertiary, #3d3f43);
+  color: var(--text-primary, #ffffff);
 }
 
 .btn-secondary:hover {
-  background: #4a4c50;
+  background: var(--bg-hover, #4a4c50);
 }
 
 .btn-primary {
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: #3d8fe8;
+  background: var(--accent-hover, #3d8fe8);
   box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
 }
 
@@ -769,7 +769,7 @@ onUnmounted(() => {
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .user-meta {
@@ -824,7 +824,7 @@ onUnmounted(() => {
 
 .qrcode-status {
   font-size: 13px;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
 }
 
 .qrcode-status.scanning {
@@ -852,7 +852,7 @@ onUnmounted(() => {
 
 .login-hint {
   font-size: 13px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 .spinner {
@@ -877,20 +877,20 @@ onUnmounted(() => {
   justify-content: flex-end;
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #3d3f43;
+  border-top: 1px solid var(--border-primary, #3d3f43);
 }
 
 /* 关于 */
 .about-section {
   margin-top: 32px;
   padding-top: 20px;
-  border-top: 1px solid #3d3f43;
+  border-top: 1px solid var(--border-primary, #3d3f43);
   text-align: center;
 }
 
 .about-text {
   font-size: 12px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
   margin: 4px 0;
 }
 
@@ -904,11 +904,11 @@ onUnmounted(() => {
 }
 
 .settings-page::-webkit-scrollbar-thumb {
-  background: #3d3f43;
+  background: var(--bg-tertiary, #3d3f43);
   border-radius: 3px;
 }
 
 .settings-page::-webkit-scrollbar-thumb:hover {
-  background: #4a4c50;
+  background: var(--bg-hover, #4a4c50);
 }
 </style>

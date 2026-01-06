@@ -742,9 +742,10 @@ const handleDownload = async () => {
   gap: 12px;
   align-items: center;
   padding: 16px;
-  background: #2b2d30;
+  background: var(--bg-secondary, #2b2d30);
   border-radius: 8px;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .platform-select {
@@ -760,28 +761,28 @@ const handleDownload = async () => {
 .url-input {
   flex: 1;
   padding: 10px 16px;
-  background: #1e1f22;
-  border: 1px solid #3d3f43;
+  background: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 14px;
   outline: none;
   transition: all 0.3s;
 }
 
 .url-input:focus {
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+  border-color: var(--accent-color, #4a9eff);
+  box-shadow: 0 0 0 3px var(--accent-light, rgba(74, 158, 255, 0.1));
 }
 
 .url-input::placeholder {
-  color: #6c6e73;
+  color: var(--text-placeholder, #6c6e73);
 }
 
 .parse-button {
   min-width: 100px;
   padding: 10px 24px;
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   border: none;
   border-radius: 6px;
   color: #ffffff;
@@ -792,7 +793,7 @@ const handleDownload = async () => {
 }
 
 .parse-button:hover:not(:disabled) {
-  background: #3d8fe8;
+  background: var(--accent-hover, #3d8fe8);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
@@ -807,16 +808,17 @@ const handleDownload = async () => {
   display: flex;
   gap: 16px;
   padding: 16px;
-  background: #2b2d30;
+  background: var(--bg-secondary, #2b2d30);
   border-radius: 12px;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .cover-box {
   width: 180px;
   height: 180px;
   flex-shrink: 0;
-  background: #1e1f22;
+  background: var(--bg-primary, #1e1f22);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -838,7 +840,7 @@ const handleDownload = async () => {
 .video-title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .stats-row {
@@ -865,7 +867,7 @@ const handleDownload = async () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
   font-size: 13px;
 }
 
@@ -878,7 +880,7 @@ const handleDownload = async () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #8c8c8c;
+  color: var(--text-tertiary, #8c8c8c);
   font-size: 12px;
 }
 
@@ -889,7 +891,7 @@ const handleDownload = async () => {
 
 .video-desc {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--text-tertiary, #8c8c8c);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -904,7 +906,7 @@ const handleDownload = async () => {
   justify-content: space-between;
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid #3d3f43;
+  border-top: 1px solid var(--border-primary, #3d3f43);
 }
 
 .author-box {
@@ -928,12 +930,12 @@ const handleDownload = async () => {
 
 .author-label {
   font-size: 13px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .author-id {
   font-size: 11px;
-  color: #6c6e73;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 .download-box {
@@ -950,7 +952,7 @@ const handleDownload = async () => {
   position: relative;
   min-width: 100px;
   padding: 10px 24px;
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   border: none;
   border-radius: 6px;
   color: #ffffff;
@@ -967,7 +969,7 @@ const handleDownload = async () => {
 }
 
 .download-button.downloading {
-  background: #3d3f43;
+  background: var(--bg-tertiary, #3d3f43);
   cursor: not-allowed;
 }
 
@@ -978,7 +980,7 @@ const handleDownload = async () => {
   left: 0;
   height: 100%;
   width: var(--progress, 0%);
-  background: linear-gradient(90deg, #4a9eff 0%, #3d8fe8 100%);
+  background: linear-gradient(90deg, var(--accent-color, #4a9eff) 0%, var(--accent-hover, #3d8fe8) 100%);
   transition: width 0.3s ease-out;
   z-index: 1;
 }
@@ -989,7 +991,7 @@ const handleDownload = async () => {
 }
 
 .download-button:hover:not(:disabled) {
-  background: #3d8fe8;
+  background: var(--accent-hover, #3d8fe8);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
@@ -1005,10 +1007,11 @@ const handleDownload = async () => {
   gap: 16px;
   flex: 3;
   min-height: 0;
-  background: #2b2d30;
+  background: var(--bg-secondary, #2b2d30);
   border-radius: 8px;
-  border: 1px solid #3d3f43;
+  border: 1px solid var(--border-primary, #3d3f43);
   padding: 16px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .copy-left {
@@ -1048,10 +1051,10 @@ const handleDownload = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(74, 158, 255, 0.15);
-  border: 1px solid rgba(74, 158, 255, 0.3);
+  background: var(--accent-light, rgba(74, 158, 255, 0.15));
+  border: 1px solid var(--accent-border, rgba(74, 158, 255, 0.3));
   border-radius: 6px;
-  color: #4a9eff;
+  color: var(--accent-color, #4a9eff);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -1062,7 +1065,7 @@ const handleDownload = async () => {
 }
 
 .floating-btn:hover:not(:disabled) {
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   color: #ffffff;
 }
 
@@ -1097,9 +1100,9 @@ const handleDownload = async () => {
 }
 
 .mode-tag.original {
-  background: rgba(74, 158, 255, 0.2);
-  color: #4a9eff;
-  border: 1px solid rgba(74, 158, 255, 0.3);
+  background: var(--accent-light, rgba(74, 158, 255, 0.2));
+  color: var(--accent-color, #4a9eff);
+  border: 1px solid var(--accent-border, rgba(74, 158, 255, 0.3));
 }
 
 .mode-tag.rewritten {
@@ -1113,10 +1116,10 @@ const handleDownload = async () => {
   height: 100%;
   padding: 12px;
   padding-top: 48px;
-  background: #1e1f22;
-  border: 1px solid #3d3f43;
+  background: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 14px;
   line-height: 1.6;
   resize: none;
@@ -1125,7 +1128,7 @@ const handleDownload = async () => {
 }
 
 .copy-textarea::placeholder {
-  color: #6c6e73;
+  color: var(--text-placeholder, #6c6e73);
 }
 
 .copy-right {
@@ -1153,7 +1156,7 @@ const handleDownload = async () => {
 .control-label {
   font-size: 12px;
   font-weight: 600;
-  color: #afb1b3;
+  color: var(--text-secondary, #afb1b3);
 }
 
 .control-select {
@@ -1175,7 +1178,7 @@ const handleDownload = async () => {
 .rewrite-button {
   width: 100%;
   padding: 12px 20px;
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   border: none;
   border-radius: 6px;
   color: #ffffff;
@@ -1197,7 +1200,7 @@ const handleDownload = async () => {
 }
 
 .rewrite-button:hover:not(:disabled) {
-  background: #3d8fe8;
+  background: var(--accent-hover, #3d8fe8);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
@@ -1211,10 +1214,10 @@ const handleDownload = async () => {
   width: 100%;
   min-height: 60px;
   padding: 10px;
-  background: #1e1f22;
-  border: 1px solid #3d3f43;
+  background: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 13px;
   line-height: 1.5;
   resize: none;
@@ -1224,11 +1227,11 @@ const handleDownload = async () => {
 }
 
 .prompt-textarea:focus {
-  border-color: #4a9eff;
+  border-color: var(--accent-color, #4a9eff);
 }
 
 .prompt-textarea::placeholder {
-  color: #6c6e73;
+  color: var(--text-placeholder, #6c6e73);
 }
 
 /* 空状态 */
@@ -1244,12 +1247,12 @@ const handleDownload = async () => {
 .empty-icon {
   width: 80px;
   height: 80px;
-  color: #3d3f43;
+  color: var(--text-tertiary, #3d3f43);
 }
 
 .empty-text {
   font-size: 16px;
-  color: #6c6e73;
+  color: var(--text-secondary, #6c6e73);
 }
 
 /* 解析中动画 */
@@ -1282,7 +1285,7 @@ const handleDownload = async () => {
 }
 
 .parsing-spinner .path {
-  stroke: #4a9eff;
+  stroke: var(--accent-color, #4a9eff);
   stroke-linecap: round;
   animation: dash 1.5s ease-in-out infinite;
 }
@@ -1294,7 +1297,7 @@ const handleDownload = async () => {
   transform: translate(-50%, -50%);
   width: 40px;
   height: 40px;
-  color: #4a9eff;
+  color: var(--accent-color, #4a9eff);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -1306,7 +1309,7 @@ const handleDownload = async () => {
 .parsing-dots span {
   width: 8px;
   height: 8px;
-  background: #4a9eff;
+  background: var(--accent-color, #4a9eff);
   border-radius: 50%;
   animation: bounce 1.4s ease-in-out infinite;
 }
@@ -1326,12 +1329,12 @@ const handleDownload = async () => {
 .parsing-text {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .parsing-hint {
   font-size: 14px;
-  color: #6c6e73;
+  color: var(--text-secondary, #6c6e73);
 }
 
 @keyframes rotate {
