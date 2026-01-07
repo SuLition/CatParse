@@ -703,6 +703,10 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        // 更新插件
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        // 进程插件（用于重启应用）
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // 在后台线程启动后端服务（不阻塞主窗口显示）
             start_backend_service(app.handle());

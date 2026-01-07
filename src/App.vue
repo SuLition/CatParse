@@ -5,6 +5,7 @@ import CloseMask from "./components/common/CloseMask.vue";
 import {toasterOptions} from "./utils/index.js";
 import TitleBar from "./components/common/TitleBar.vue";
 import Sidebar from "./components/common/Sidebar.vue";
+import { Updater } from "./components/common";
 import {initTheme, useAppliedTheme} from './services/theme'
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {loadConfig} from './services/config'
@@ -15,6 +16,9 @@ const toasterTheme = computed(() => appliedTheme.value === 'dark' ? 'dark' : 'li
 
 // 页面过渡效果
 const pageTransition = ref('fade')
+
+// 更新组件引用
+const updaterRef = ref(null)
 
 // 加载过渡效果配置
 const loadTransitionConfig = () => {
@@ -48,6 +52,11 @@ window.addEventListener('storage', (e) => {
 
 // 暴露给外部用于手动刷新
 window.__refreshTransition = loadTransitionConfig
+
+// 暴露检查更新方法给设置页面调用
+window.__checkUpdate = (showNoUpdate) => {
+  updaterRef.value?.checkUpdate(showNoUpdate)
+}
 </script>
 
 <template>
@@ -64,6 +73,8 @@ window.__refreshTransition = loadTransitionConfig
       <Toaster v-bind="toasterOptions" :theme="toasterTheme"/>
       <!-- 关闭提示遮罩层 -->
       <CloseMask/>
+      <!-- 更新组件 -->
+      <Updater ref="updaterRef" />
     </div>
   </div>
 </template>

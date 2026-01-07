@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { loadConfig, saveConfig, PAGE_TRANSITION_OPTIONS } from '@/services/config'
 import { setWindowEffect, useWindowEffect } from '@/services/theme'
@@ -13,6 +13,9 @@ const WINDOW_EFFECT_OPTIONS = [
 
 // 窗口效果
 const windowEffect = useWindowEffect()
+
+// 自动检查更新
+const autoCheckUpdate = ref(true)
 
 // 表单数据
 const form = reactive({
@@ -43,6 +46,27 @@ const loadForm = () => {
   if (config.appearance) {
     Object.assign(form.appearance, config.appearance)
   }
+  // 加载自动检查更新设置
+  autoCheckUpdate.value = config.update?.autoCheck ?? true
+}
+
+// 切换自动检查更新
+const onAutoCheckChange = () => {
+  const config = loadConfig()
+  saveConfig({
+    ...config,
+    update: { ...config.update, autoCheck: autoCheckUpdate.value }
+  })
+  toast.success(autoCheckUpdate.value ? '已开启自动检查更新' : '已关闭自动检查更新')
+}
+
+// 手动检查更新
+const checkUpdateNow = () => {
+  if (window.__checkUpdate) {
+    window.__checkUpdate(true)
+  } else {
+    toast.error('更新功能未初始化')
+  }
 }
 
 onMounted(() => {
@@ -52,6 +76,7 @@ onMounted(() => {
 
 <template>
   <div class="settings-panel">
+    <!-- 窗口效果 -->
     <div class="setting-group">
       <div class="setting-item">
         <div class="setting-row">
@@ -66,6 +91,7 @@ onMounted(() => {
       <p class="setting-hint">Windows 11 原生毛玻璃效果（需要 Win11 22H2+）</p>
     </div>
 
+    <!-- 页面过渡 -->
     <div class="setting-group">
       <div class="setting-item">
         <div class="setting-row">
@@ -78,6 +104,40 @@ onMounted(() => {
                       class="setting-select" @change="onTransitionChange"/>
       </div>
       <p class="setting-hint">切换页面时的动画效果</p>
+    </div>
+
+    <!-- 自动检查更新 -->
+    <div class="setting-group">
+      <div class="setting-item">
+        <div class="setting-row">
+          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="setting-label">自动检查更新</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" v-model="autoCheckUpdate" @change="onAutoCheckChange">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="setting-hint">启动应用时自动检查新版本</p>
+    </div>
+
+    <!-- 手动检查更新 -->
+    <div class="setting-group">
+      <div class="setting-item">
+        <div class="setting-row">
+          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span class="setting-label">检查更新</span>
+        </div>
+        <button class="check-update-btn" @click="checkUpdateNow">立即检查</button>
+      </div>
+      <p class="setting-hint">手动检查是否有新版本可用</p>
     </div>
   </div>
 </template>
@@ -142,5 +202,73 @@ onMounted(() => {
 
 .setting-select {
   width: 160px;
+}
+
+/* Switch 开关样式 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-primary, #1e1f22);
+  border: 1px solid var(--border-primary, #3d3f43);
+  transition: 0.2s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-tertiary, #6c6e73);
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-color, #4a9eff);
+  border-color: var(--accent-color, #4a9eff);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: #fff;
+}
+
+/* 检查更新按钮 */
+.check-update-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-primary, #3d3f43);
+  background: var(--bg-primary, #1e1f22);
+  color: var(--text-primary, #ffffff);
+}
+
+.check-update-btn:hover {
+  background: var(--accent-color, #4a9eff);
+  border-color: var(--accent-color, #4a9eff);
+  color: #fff;
 }
 </style>

@@ -57,5 +57,10 @@ export const defaultConfig = {
   },
   
   // 提示词配置
-  prompts: { ...DEFAULT_PROMPTS }
+  prompts: { ...DEFAULT_PROMPTS },
+  
+  // 更新设置
+  update: {
+    autoCheck: true  // 自动检查更新
+  }
 }

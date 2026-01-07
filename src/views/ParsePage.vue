@@ -1,5 +1,6 @@
 <script setup>
 import {ref, computed, watch, onMounted} from 'vue';
+import {useRoute} from 'vue-router';
 import {toast} from 'vue-sonner';
 import {parseVideo as parseBilibiliVideoApi} from '../services/api/bilibiliApi.js';
 import {parseVideo as parseDouyinVideoApi} from '../services/api/douyinApi.js';
@@ -13,10 +14,13 @@ import {
   downloadAudioData
 } from '../services/download/downloadService.js';
 import { openDownloadDir } from '../services/download/tauriDownload.js';
+import { addParseHistory, updateParseHistory } from '../services/storage/parseHistoryStorage.js';
 import {formatNumber, formatDuration, formatPubDate} from '../utils/format.js';
 import {extractUrlFromText} from '../utils/urlParser.js';
 import {PLATFORMS, AI_MODELS, REWRITE_STYLES, DEFAULT_PROMPTS} from '../constants/options.js';
 import CustomSelect from '../components/common/CustomSelect.vue';
+
+const route = useRoute();
 
 const videoUrl = ref('');
 const platform = ref('bilibili');
@@ -33,6 +37,7 @@ const isDownloading = ref(false);
 const downloadProgress = ref(0);
 const selectedQuality = ref('');
 const qualityOptions = ref([]);
+const currentHistoryId = ref(null); // 当前历史记录 ID
 
 // 加载提示词（直接使用默认提示词）
 const loadPrompt = (style) => {
@@ -47,6 +52,16 @@ const onStyleChange = (newStyle) => {
 // 初始化加载
 onMounted(() => {
   loadPrompt(rewriteStyle.value);
+  
+  // 检查是否有传入的参数（来自重新解析）
+  if (route.query.url) {
+    videoUrl.value = route.query.url;
+    // 设置平台
+    if (route.query.platform) {
+      platform.value = route.query.platform;
+    }
+    handleParse();
+  }
 });
 
 // 平台切换时清空视频信息
@@ -54,6 +69,7 @@ watch(platform, () => {
   videoInfo.value = null;
   copyText.value = '';
   copyMode.value = 'original';
+  currentHistoryId.value = null;
 });
 
 
@@ -71,6 +87,7 @@ const handleParse = async () => {
   isParsing.value = true;
   videoInfo.value = null;
   copyText.value = '';
+  currentHistoryId.value = null;
 
   try {
     if (platform.value === 'bilibili') {
@@ -81,6 +98,19 @@ const handleParse = async () => {
       await parseXiaohongshuVideo();
     } else {
       throw new Error(`${platform.value} 解析功能开发中...`);
+    }
+
+    // 解析成功后保存到历史记录
+    if (videoInfo.value) {
+      const historyId = await addParseHistory({
+        cover: videoInfo.value.cover || '',
+        title: videoInfo.value.title || '',
+        platform: videoInfo.value.platform || platform.value,
+        originalUrl: videoUrl.value,
+        originalText: '',
+        rewrittenText: ''
+      });
+      currentHistoryId.value = historyId;
     }
 
     isParsing.value = false;
@@ -337,6 +367,12 @@ const handleExtractCopy = async () => {
     }
 
     copyText.value = result || '未识别到语音内容';
+    
+    // 更新历史记录的原始文案
+    if (currentHistoryId.value && result) {
+      await updateParseHistory(currentHistoryId.value, { originalText: result });
+    }
+    
     toast.success('文案提取完成');
   } catch (error) {
     console.error('语音识别失败:', error);
@@ -359,6 +395,12 @@ const handleRewrite = async () => {
     const result = await rewriteText(copyText.value, rewriteStyle.value, aiModel.value);
     copyMode.value = 'rewritten';
     copyText.value = result;
+    
+    // 更新历史记录的改写文案
+    if (currentHistoryId.value) {
+      await updateParseHistory(currentHistoryId.value, { rewrittenText: result });
+    }
+    
     toast.success('改写完成');
   } catch (error) {
     console.error('改写失败:', error);

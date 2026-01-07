@@ -33,6 +33,7 @@
     "targets": [
       "nsis"
     ],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -43,5 +44,15 @@
     "resources": [
       "binaries/backend_server.exe"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBMjQ0MjRGOTc4RDAwRkYKUldUL0FJMlhUMElrMnMyNXl3ZlBjbWFtdVFsVXFtWVNLMnFWZ21iVCtUdGNrdEpndjJha1lJdDcK",
+      "endpoints": [
+        "https://github.com/SuLition/WenAnAiWrite/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
