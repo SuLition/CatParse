@@ -4,12 +4,14 @@
  */
 
 import CryptoJS from 'crypto-js'
-import { getServiceConfig } from './config'
+import { useConfigStore } from '@/stores'
 import { SERVICE_URL } from './api/config.js'
 
 // 获取配置
 function getConfig() {
-  const config = getServiceConfig('tencentAsr')
+  const configStore = useConfigStore()
+  const config = configStore.config.tencentAsr || {}
+  console.log('[TencentASR] 读取配置:', { secretId: config.secretId ? '已配置' : '未配置', secretKey: config.secretKey ? '已配置' : '未配置' })
   return {
     secretId: config.secretId || '',
     secretKey: config.secretKey || '',

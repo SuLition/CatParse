@@ -5,7 +5,7 @@
 
 import { readTextFile, writeTextFile, exists, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs'
 import { appDataDir } from '@tauri-apps/api/path'
-import { loadConfig } from '@/services/config'
+import { useConfigStore } from '@/stores'
 
 const HISTORY_FILE = 'parse_history.json'
 const DEFAULT_MAX_RECORDS = 100
@@ -15,8 +15,8 @@ const DEFAULT_MAX_RECORDS = 100
  */
 function getMaxRecords() {
   try {
-    const config = loadConfig()
-    return config.history?.maxRecords || DEFAULT_MAX_RECORDS
+    const configStore = useConfigStore()
+    return configStore.config.history?.maxRecords || DEFAULT_MAX_RECORDS
   } catch {
     return DEFAULT_MAX_RECORDS
   }

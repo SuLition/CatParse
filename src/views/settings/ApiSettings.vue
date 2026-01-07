@@ -1,7 +1,6 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useConfigStore } from '@/stores'
-import { checkConfig } from '@/services/config'
 
 // Store
 const configStore = useConfigStore()
@@ -15,14 +14,14 @@ const form = reactive({
   hunyuan: { secretId: '', secretKey: '' }
 })
 
-// 配置状态
-const configStatus = ref({
-  tencentAsr: false,
-  doubao: false,
-  deepseek: false,
-  qianwen: false,
-  hunyuan: false
-})
+// 配置状态 - 直接从 configStore 计算
+const configStatus = computed(() => ({
+  tencentAsr: !!(configStore.config.tencentAsr?.secretId && configStore.config.tencentAsr?.secretKey),
+  doubao: !!configStore.config.doubao?.apiKey,
+  deepseek: !!configStore.config.deepseek?.apiKey,
+  qianwen: !!configStore.config.qianwen?.apiKey,
+  hunyuan: !!(configStore.config.hunyuan?.secretId && configStore.config.hunyuan?.secretKey)
+}))
 
 // 加载配置
 const loadForm = () => {
@@ -32,7 +31,6 @@ const loadForm = () => {
       Object.assign(form[key], config[key])
     }
   })
-  configStatus.value = checkConfig()
 }
 
 // 失去焦点时保存配置
@@ -43,7 +41,6 @@ const onBlurSave = () => {
       configStore.update(`${key}.${subKey}`, form[key][subKey])
     })
   })
-  configStatus.value = checkConfig()
 }
 
 onMounted(() => {

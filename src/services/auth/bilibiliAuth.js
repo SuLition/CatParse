@@ -4,7 +4,7 @@
  */
 
 import { SERVICE_URL } from '../api/config.js'
-import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES, migrateBilibiliAuthData } from '../storage/fileStorage.js'
+import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES } from '../storage/fileStorage.js'
 
 // 内存缓存，避免频繁读文件
 let authCache = null
@@ -202,9 +202,6 @@ export async function loadBilibiliAuth() {
     if (cacheLoaded && authCache !== null) {
       return authCache
     }
-    
-    // 先尝试迁移旧数据
-    await migrateBilibiliAuthData()
     
     // 从文件读取
     const data = await readJsonFile(FILE_NAMES.BILIBILI_AUTH)

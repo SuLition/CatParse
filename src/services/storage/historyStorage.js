@@ -3,12 +3,27 @@
  * 管理下载历史的持久化存储（使用本地文件存储）
  */
 
-import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES, migrateDownloadHistoryData } from './fileStorage'
-import { HISTORY_CONFIG } from '@/constants/storage'
+import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES } from './fileStorage'
+import { useConfigStore } from '@/stores'
 
 // 内存缓存
 let historyCache = null
 let cacheLoaded = false
+
+// 默认最大记录数
+const DEFAULT_MAX_RECORDS = 100
+
+/**
+ * 获取最大记录数配置
+ */
+function getMaxRecords() {
+  try {
+    const configStore = useConfigStore()
+    return configStore.config.history?.maxRecords || DEFAULT_MAX_RECORDS
+  } catch {
+    return DEFAULT_MAX_RECORDS
+  }
+}
 
 /**
  * 获取所有历史记录
@@ -18,9 +33,6 @@ export async function getHistory() {
   if (cacheLoaded && historyCache !== null) {
     return historyCache
   }
-  
-  // 先尝试迁移旧数据
-  await migrateDownloadHistoryData()
   
   const data = await readJsonFile(FILE_NAMES.DOWNLOAD_HISTORY, [])
   historyCache = data
@@ -67,8 +79,9 @@ export async function addHistory(record) {
   history.unshift(newRecord)
   
   // 限制最大条数
-  if (history.length > HISTORY_CONFIG.MAX_RECORDS) {
-    history.splice(HISTORY_CONFIG.MAX_RECORDS)
+  const maxRecords = getMaxRecords()
+  if (history.length > maxRecords) {
+    history.splice(maxRecords)
   }
   
   return await saveHistory(history)

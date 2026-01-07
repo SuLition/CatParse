@@ -3,7 +3,7 @@
  * 使用 Rust 后端进行高速下载
  */
 
-import { getServiceConfig } from '../config'
+import { useConfigStore } from '@/stores'
 
 // 检测是否在 Tauri 环境中运行
 export function isTauri() {
@@ -17,7 +17,8 @@ async function getSaveDir() {
   const { invoke } = await import('@tauri-apps/api/core')
   
   // 优先使用用户配置的下载路径
-  const downloadConfig = getServiceConfig('download')
+  const configStore = useConfigStore()
+  const downloadConfig = configStore.config.download || {}
   console.log('[getSaveDir] downloadConfig:', downloadConfig)
   
   if (downloadConfig && downloadConfig.savePath) {

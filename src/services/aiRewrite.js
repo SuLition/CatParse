@@ -2,7 +2,7 @@
  * AI文案改写服务
  */
 
-import { getServiceConfig } from './config'
+import { useConfigStore } from '@/stores'
 import { SERVICE_URL } from './api/config.js'
 import { DEFAULT_PROMPTS } from '@/constants'
 
@@ -10,7 +10,8 @@ import { DEFAULT_PROMPTS } from '@/constants'
  * 获取提示词
  */
 function getPrompt(style) {
-  const prompts = getServiceConfig('prompts')
+  const configStore = useConfigStore()
+  const prompts = configStore.config.prompts || {}
   return prompts[style] || DEFAULT_PROMPTS[style] || DEFAULT_PROMPTS.professional
 }
 
@@ -21,7 +22,9 @@ function getPrompt(style) {
  * @returns {Promise<string>} - 改写后的文案
  */
 export async function rewriteWithDoubao(text, style = 'professional') {
-  const config = getServiceConfig('doubao')
+  const configStore = useConfigStore()
+  const config = configStore.config.doubao || {}
+  console.log('[AIRewrite] 读取豆包配置:', { apiKey: config.apiKey ? '已配置' : '未配置', model: config.model })
   
   if (!config.apiKey) {
     throw new Error('请先配置豆包 API Key')
@@ -61,13 +64,24 @@ export async function rewriteWithDoubao(text, style = 'professional') {
   })
 
   const proxyResult = await response.json()
+  console.log('[AIRewrite] 代理响应:', proxyResult)
+  
   if (!proxyResult.success) {
     console.error('豆包API代理错误:', proxyResult.message)
     throw new Error('AI改写请求失败')
   }
 
   const data = proxyResult.data
-  return data.choices?.[0]?.message?.content || ''
+  console.log('[AIRewrite] API返回数据:', data)
+  
+  const content = data.choices?.[0]?.message?.content
+  console.log('[AIRewrite] 提取的内容:', content)
+  
+  if (!content) {
+    throw new Error('改写结果为空，请重试')
+  }
+  
+  return content
 }
 
 /**

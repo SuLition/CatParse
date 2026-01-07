@@ -1,10 +1,10 @@
 /**
  * 主题 Store
- * 管理应用的主题、主题色、窗口效果（使用本地文件存储）
+ * 管理应用的主题、主题色、窗口效果（使用 configStore 统一存储）
  */
 
 import { defineStore } from 'pinia'
-import { readJsonFile, writeJsonFile, FILE_NAMES, migrateThemeData } from '@/services/storage/fileStorage'
+import { useConfigStore } from './config'
 import { THEME_MODES, DARK_THEME, LIGHT_THEME, ACCENT_COLORS } from '@/constants/theme'
 import { invoke } from '@tauri-apps/api/core'
 
@@ -28,34 +28,25 @@ export const useThemeStore = defineStore('theme', {
 
   actions: {
     /**
-     * 保存主题数据到文件
+     * 保存主题数据到 configStore
      */
     async _saveThemeData() {
-      const data = {
-        mode: this.mode,
-        windowEffect: this.windowEffect,
-        accentColor: this.accentColor
-      }
-      await writeJsonFile(FILE_NAMES.THEME, data)
+      const configStore = useConfigStore()
+      await configStore.update('appearance.themeMode', this.mode)
+      await configStore.update('appearance.windowEffect', this.windowEffect)
+      await configStore.update('appearance.accentColor', this.accentColor)
     },
 
     /**
      * 初始化主题
      */
     async init() {
-      // 先尝试迁移旧数据
-      await migrateThemeData()
+      const configStore = useConfigStore()
+      const appearance = configStore.config.appearance || {}
       
-      // 从文件加载设置
-      const themeData = await readJsonFile(FILE_NAMES.THEME, {
-        mode: THEME_MODES.DARK,
-        windowEffect: 'none',
-        accentColor: 'blue'
-      })
-      
-      this.mode = themeData.mode || THEME_MODES.DARK
-      this.windowEffect = themeData.windowEffect || 'none'
-      this.accentColor = themeData.accentColor || 'blue'
+      this.mode = appearance.themeMode || THEME_MODES.DARK
+      this.windowEffect = appearance.windowEffect || 'none'
+      this.accentColor = appearance.accentColor || 'blue'
 
       // 计算实际主题
       const actualTheme = this.mode === THEME_MODES.SYSTEM

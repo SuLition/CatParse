@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES, migrateConfigData } from '@/services/storage/fileStorage'
+import { readJsonFile, writeJsonFile, removeFile, FILE_NAMES } from '@/services/storage/fileStorage'
 import { defaultConfig } from '@/services/config/defaultConfig'
 
 /**
@@ -51,9 +51,6 @@ export const useConfigStore = defineStore('config', {
      */
     async load() {
       try {
-        // 先尝试迁移旧数据
-        await migrateConfigData()
-        
         // 从文件读取配置
         const stored = await readJsonFile(FILE_NAMES.CONFIG)
         if (stored) {

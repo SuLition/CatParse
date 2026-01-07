@@ -3,9 +3,8 @@
  * 管理应用的亮色/暗色主题切换
  */
 
-import { ref, watch } from 'vue'
-import { getItem, setItem } from '../storage/localStorage'
-import { STORAGE_KEYS } from '@/constants/storage'
+import { ref } from 'vue'
+import { useConfigStore } from '@/stores'
 import { THEME_MODES, DARK_THEME, LIGHT_THEME, ACCENT_COLORS } from '@/constants/theme'
 import { invoke } from '@tauri-apps/api/core'
 
@@ -108,16 +107,19 @@ async function applyWindowEffect(effect, isDark) {
  * 初始化主题
  */
 export async function initTheme() {
-  // 从存储加载主题设置
-  const savedMode = getItem(STORAGE_KEYS.THEME, THEME_MODES.DARK)
+  const configStore = useConfigStore()
+  const appearance = configStore.config.appearance || {}
+  
+  // 从配置加载主题设置
+  const savedMode = appearance.themeMode || THEME_MODES.DARK
   themeMode.value = savedMode
   
   // 加载窗口效果设置
-  const savedEffect = getItem(STORAGE_KEYS.WINDOW_EFFECT, 'none')
+  const savedEffect = appearance.windowEffect || 'none'
   windowEffect.value = savedEffect
   
   // 加载主题色设置
-  const savedAccentColor = getItem(STORAGE_KEYS.ACCENT_COLOR, 'blue')
+  const savedAccentColor = appearance.accentColor || 'blue'
   accentColor.value = savedAccentColor
   
   // 计算实际主题
@@ -150,7 +152,9 @@ function handleSystemThemeChange(e) {
  */
 export async function setTheme(mode) {
   themeMode.value = mode
-  setItem(STORAGE_KEYS.THEME, mode)
+  
+  const configStore = useConfigStore()
+  await configStore.update('appearance.themeMode', mode)
   
   const actualTheme = mode === THEME_MODES.SYSTEM 
     ? getSystemTheme() 
@@ -165,7 +169,10 @@ export async function setTheme(mode) {
  */
 export async function setWindowEffect(effect) {
   windowEffect.value = effect
-  setItem(STORAGE_KEYS.WINDOW_EFFECT, effect)
+  
+  const configStore = useConfigStore()
+  await configStore.update('appearance.windowEffect', effect)
+  
   await applyWindowEffect(effect, appliedTheme.value === THEME_MODES.DARK)
 }
 
@@ -173,13 +180,16 @@ export async function setWindowEffect(effect) {
  * 设置主题色
  * @param {string} colorKey
  */
-export function setAccentColor(colorKey) {
+export async function setAccentColor(colorKey) {
   if (!ACCENT_COLORS[colorKey]) {
     console.warn('[Theme] 无效的主题色:', colorKey)
     return
   }
   accentColor.value = colorKey
-  setItem(STORAGE_KEYS.ACCENT_COLOR, colorKey)
+  
+  const configStore = useConfigStore()
+  await configStore.update('appearance.accentColor', colorKey)
+  
   applyAccentColorToDOM(colorKey)
 }
 
