@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "notes": "首个版本发布",
+  "pub_date": "2026-01-07T12:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "（.sig文件的内容）",
+      "url": "https://github.com/SuLition/WenAnAiWrite/releases/download/v0.1.0/文案助手_0.1.0_x64-setup.nsis.zip"
+    }
+  }
+}
