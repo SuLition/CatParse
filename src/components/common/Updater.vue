@@ -129,11 +129,14 @@ onMounted(() => {
           </div>
           
           <div class="updater-actions">
-            <button class="btn btn-primary" @click="doUpdate" :disabled="state.downloading">
-              <svg v-if="state.downloading" class="btn-loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12a9 9 0 11-6.219-8.56"/>
-              </svg>
-              {{ state.downloading ? '下载中...' : '立即更新' }}
+            <button 
+              class="btn btn-primary" 
+              :class="{ 'btn-progress': state.downloading }" 
+              :style="state.downloading ? { '--progress': state.progress + '%' } : {}"
+              @click="doUpdate" 
+              :disabled="state.downloading"
+            >
+              {{ state.downloading ? state.progress.toFixed(0) + '%' : '立即更新' }}
             </button>
             <button class="btn btn-secondary" @click="close" :disabled="state.downloading">
               稍后更新
@@ -148,20 +151,23 @@ onMounted(() => {
 <style scoped>
 .updater-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  backdrop-filter: blur(4px);
 }
 
 .updater-dialog {
   background: var(--bg-secondary, #2b2d30);
   border-radius: 12px;
   padding: 24px;
-  width: 420px;
+  width: 520px;
   max-width: 90vw;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border-primary, #3d3f43);
@@ -210,7 +216,7 @@ onMounted(() => {
   background: var(--bg-primary, #1e1f22);
   border-radius: 8px;
   padding: 12px 16px;
-  max-height: 200px;
+  height: 200px;
   overflow-y: auto;
   border: 1px solid var(--border-primary, #3d3f43);
 }
@@ -298,15 +304,6 @@ onMounted(() => {
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.btn-loading {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* 过渡动画 */

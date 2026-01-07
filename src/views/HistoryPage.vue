@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { getParseHistory, deleteParseHistory, clearParseHistory } from '@/services/storage';
-import { getPlatformName, getPlatformColor } from '@/constants/platforms';
-import { toast } from 'vue-sonner';
+import {ref, onMounted} from 'vue';
+import {useRouter} from 'vue-router';
+import {getParseHistory, deleteParseHistory, clearParseHistory} from '@/services/storage';
+import {getPlatformName, getPlatformColor} from '@/constants/platforms';
+import {toast} from 'vue-sonner';
 
 const router = useRouter();
 const historyList = ref([]);
@@ -31,7 +31,7 @@ const handleDelete = async (id) => {
 const handleReparse = (item) => {
   router.push({
     path: '/parse',
-    query: { url: item.originalUrl, platform: item.platform }
+    query: {url: item.originalUrl, platform: item.platform}
   });
 };
 
@@ -86,10 +86,12 @@ const clearAll = async () => {
 
     <!-- 空状态 -->
     <div v-else-if="historyList.length === 0" class="empty-state">
-      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" stroke="currentColor" stroke-width="2"/>
-        <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <svg class="empty-icon" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor"
+              stroke-linecap="round" stroke-width="2"/>
+        <path d="M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" stroke="currentColor"
+              stroke-width="2"/>
+        <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
       </svg>
       <p class="empty-text">暂无历史记录</p>
     </div>
@@ -99,14 +101,16 @@ const clearAll = async () => {
       <div v-for="item in historyList" :key="item.id" class="history-card">
         <!-- 左侧封面图 -->
         <div class="card-cover">
-          <img v-if="item.cover" :src="item.cover" :alt="item.title" />
+          <img v-if="item.cover" :alt="item.title" :src="item.cover"/>
           <div v-else class="cover-placeholder">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg fill="none" viewBox="0 0 24 24">
+              <path
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
             </svg>
           </div>
           <!-- 平台标签 -->
-          <span class="platform-badge" :style="{ background: getPlatformColor(item.platform) }">
+          <span :style="{ background: getPlatformColor(item.platform) }" class="platform-badge">
             {{ getPlatformName(item.platform) }}
           </span>
         </div>
@@ -119,9 +123,9 @@ const clearAll = async () => {
           <!-- 文案区域（带悬浮复制按钮） -->
           <div class="card-text-wrapper">
             <p class="card-text">{{ getDisplayText(item) }}</p>
-            <button v-if="hasText(item)" class="copy-btn" @click="handleCopy(item)" title="复制文案">
-              <svg viewBox="0 0 24 24" fill="none">
-                <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+            <button v-if="hasText(item)" class="copy-btn" title="复制文案" @click="handleCopy(item)">
+              <svg fill="none" viewBox="0 0 24 24">
+                <rect height="13" rx="2" stroke="currentColor" stroke-width="2" width="13" x="9" y="9"/>
                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
               </svg>
             </button>
@@ -132,7 +136,11 @@ const clearAll = async () => {
             <span class="create-time">{{ item.createTime }}</span>
             <div class="card-actions">
               <button class="action-btn primary" @click="handleReparse(item)">重新解析</button>
-              <button class="action-btn danger" @click="handleDelete(item.id)">删除</button>
+              <button class="action-btn danger" title="删除" @click="handleDelete(item.id)">
+                              <svg fill="none" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                              </svg>
+                            </button>
             </div>
           </div>
         </div>
@@ -298,6 +306,7 @@ const clearAll = async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  padding-right: 30px;
 }
 
 /* 悬浮复制按钮 */
@@ -375,9 +384,20 @@ const clearAll = async () => {
 }
 
 .action-btn.danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   background: transparent;
   border: 1px solid var(--border-primary, #3d3f43);
   color: var(--text-secondary, #afb1b3);
+}
+
+.action-btn.danger svg {
+  width: 16px;
+  height: 16px;
 }
 
 .action-btn.danger:hover {

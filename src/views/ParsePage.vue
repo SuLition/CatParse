@@ -13,12 +13,13 @@ import {
   downloadXiaohongshu,
   downloadAudioData
 } from '../services/download/downloadService.js';
-import { openDownloadDir } from '../services/download/tauriDownload.js';
-import { addParseHistory, updateParseHistory } from '../services/storage/parseHistoryStorage.js';
+import {openDownloadDir} from '../services/download/tauriDownload.js';
+import {addParseHistory, updateParseHistory} from '../services/storage/parseHistoryStorage.js';
 import {formatNumber, formatDuration, formatPubDate} from '../utils/format.js';
 import {extractUrlFromText} from '../utils/urlParser.js';
 import {PLATFORMS, AI_MODELS, REWRITE_STYLES, DEFAULT_PROMPTS} from '../constants/options.js';
 import CustomSelect from '../components/common/CustomSelect.vue';
+import HamsterLoading from '../components/common/HamsterLoading.vue';
 
 const route = useRoute();
 
@@ -52,7 +53,7 @@ const onStyleChange = (newStyle) => {
 // 初始化加载
 onMounted(() => {
   loadPrompt(rewriteStyle.value);
-  
+
   // 检查是否有传入的参数（来自重新解析）
   if (route.query.url) {
     videoUrl.value = route.query.url;
@@ -102,13 +103,17 @@ const handleParse = async () => {
 
     // 解析成功后保存到历史记录
     if (videoInfo.value) {
+      // 获取视频ID（各平台字段名不同）
+      const videoId = videoInfo.value.bvid || videoInfo.value.awemeId || videoInfo.value.noteId || '';
+      
       const historyId = await addParseHistory({
         cover: videoInfo.value.cover || '',
         title: videoInfo.value.title || '',
         platform: videoInfo.value.platform || platform.value,
         originalUrl: videoUrl.value,
         originalText: '',
-        rewrittenText: ''
+        rewrittenText: '',
+        videoId: videoId
       });
       currentHistoryId.value = historyId;
     }
@@ -367,12 +372,12 @@ const handleExtractCopy = async () => {
     }
 
     copyText.value = result || '未识别到语音内容';
-    
+
     // 更新历史记录的原始文案
     if (currentHistoryId.value && result) {
-      await updateParseHistory(currentHistoryId.value, { originalText: result });
+      await updateParseHistory(currentHistoryId.value, {originalText: result});
     }
-    
+
     toast.success('文案提取完成');
   } catch (error) {
     console.error('语音识别失败:', error);
@@ -395,12 +400,12 @@ const handleRewrite = async () => {
     const result = await rewriteText(copyText.value, rewriteStyle.value, aiModel.value);
     copyMode.value = 'rewritten';
     copyText.value = result;
-    
+
     // 更新历史记录的改写文案
     if (currentHistoryId.value) {
-      await updateParseHistory(currentHistoryId.value, { rewrittenText: result });
+      await updateParseHistory(currentHistoryId.value, {rewrittenText: result});
     }
-    
+
     toast.success('改写完成');
   } catch (error) {
     console.error('改写失败:', error);
@@ -657,8 +662,10 @@ const handleDownload = async () => {
             </button>
             <button class="open-folder-btn" title="打开下载文件夹" @click="openDownloadDir">
               <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 11v6M9 14l3-3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z" stroke="currentColor"
+                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                <path d="M12 11v6M9 14l3-3 3 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="2"/>
               </svg>
             </button>
           </div>
@@ -762,23 +769,8 @@ const handleDownload = async () => {
 
     <!-- 解析中动画 -->
     <div v-if="isParsing && !videoInfo" class="parsing-state">
-      <div class="parsing-animation">
-        <div class="parsing-circle">
-          <svg class="parsing-spinner" viewBox="0 0 50 50">
-            <circle class="path" cx="25" cy="25" fill="none" r="20" stroke-width="4"/>
-          </svg>
-          <svg class="parsing-icon" fill="none" viewBox="0 0 24 24">
-            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3"
-                  stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            <polygon fill="currentColor" points="10,8 16,12 10,16"/>
-          </svg>
-        </div>
-        <div class="parsing-dots">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-      <p class="parsing-text">正在解析视频信息</p>
-      <p class="parsing-hint">请稍候，正在获取视频数据...</p>
+      <HamsterLoading :size="12"/>
+      <p class="parsing-hint">全力解析中...</p>
     </div>
 
     <!-- 空状态 -->
@@ -1392,118 +1384,8 @@ const handleDownload = async () => {
   gap: 20px;
 }
 
-.parsing-animation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.parsing-circle {
-  position: relative;
-  width: 100px;
-  height: 100px;
-}
-
-.parsing-spinner {
-  width: 100%;
-  height: 100%;
-  animation: rotate 1.5s linear infinite;
-}
-
-.parsing-spinner .path {
-  stroke: var(--accent-color, #4a9eff);
-  stroke-linecap: round;
-  animation: dash 1.5s ease-in-out infinite;
-}
-
-.parsing-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  color: var(--accent-color, #4a9eff);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.parsing-dots {
-  display: flex;
-  gap: 8px;
-}
-
-.parsing-dots span {
-  width: 8px;
-  height: 8px;
-  background: var(--accent-color, #4a9eff);
-  border-radius: 50%;
-  animation: bounce 1.4s ease-in-out infinite;
-}
-
-.parsing-dots span:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.parsing-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.parsing-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-.parsing-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary, #ffffff);
-}
-
 .parsing-hint {
   font-size: 14px;
   color: var(--text-secondary, #6c6e73);
-}
-
-@keyframes rotate {
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes dash {
-  0% {
-    stroke-dasharray: 1, 150;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    stroke-dasharray: 90, 150;
-    stroke-dashoffset: -35;
-  }
-  100% {
-    stroke-dasharray: 90, 150;
-    stroke-dashoffset: -124;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: translate(-50%, -50%) scale(0.95);
-  }
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: scale(0.6);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 </style>

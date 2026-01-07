@@ -26,6 +26,8 @@
     "dialog:allow-message",
     "log:default",
     "core:path:default",
+    "updater:default",
+    "process:allow-restart",
     {
       "identifier": "http:allow-fetch",
       "allow": [

@@ -17,6 +17,9 @@ const windowEffect = useWindowEffect()
 // 自动检查更新
 const autoCheckUpdate = ref(true)
 
+// 检查中状态
+const isChecking = ref(false)
+
 // 表单数据
 const form = reactive({
   appearance: { pageTransition: 'fade' }
@@ -61,9 +64,16 @@ const onAutoCheckChange = () => {
 }
 
 // 手动检查更新
-const checkUpdateNow = () => {
+const checkUpdateNow = async () => {
+  if (isChecking.value) return
+  
   if (window.__checkUpdate) {
-    window.__checkUpdate(true)
+    isChecking.value = true
+    try {
+      await window.__checkUpdate(true)
+    } finally {
+      isChecking.value = false
+    }
   } else {
     toast.error('更新功能未初始化')
   }
@@ -135,7 +145,7 @@ onMounted(() => {
           </svg>
           <span class="setting-label">检查更新</span>
         </div>
-        <button class="check-update-btn" @click="checkUpdateNow">立即检查</button>
+        <button class="check-update-btn" :class="{ 'btn-loading': isChecking }" @click="checkUpdateNow">立即检查</button>
       </div>
       <p class="setting-hint">手动检查是否有新版本可用</p>
     </div>

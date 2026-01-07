@@ -33,5 +33,14 @@ __pycache__/
 venv/
 ENV/
 
+# PyInstaller 构建产物
+parser-service/build/
+parser-service/dist/
+
+# 测试数据文件
+bilibli.json
+douyin.json
+xiaohongshu.json
+
 # Tauri
 src-tauri/gen/schemas/

@@ -77,10 +77,19 @@ async function saveParseHistory(history) {
  * @param {string} record.originalUrl - 原始链接
  * @param {string} record.originalText - 原始文案
  * @param {string} record.rewrittenText - 改写后的文案
+ * @param {string} record.videoId - 视频唯一ID（用于去重）
  * @returns {Promise<number|null>} 返回记录 ID，失败返回 null
  */
 export async function addParseHistory(record) {
   const history = await getParseHistory()
+  
+  // 根据 videoId 和 platform 去重，如果存在相同视频则替换
+  let filteredHistory = history
+  if (record.videoId) {
+    filteredHistory = history.filter(item => 
+      !(item.videoId === record.videoId && item.platform === record.platform)
+    )
+  }
   
   const id = Date.now()
   const newRecord = {
@@ -96,14 +105,14 @@ export async function addParseHistory(record) {
   }
   
   // 添加到列表开头
-  history.unshift(newRecord)
+  filteredHistory.unshift(newRecord)
   
   // 限制最大条数
-  if (history.length > MAX_RECORDS) {
-    history.splice(MAX_RECORDS)
+  if (filteredHistory.length > MAX_RECORDS) {
+    filteredHistory.splice(MAX_RECORDS)
   }
   
-  const success = await saveParseHistory(history)
+  const success = await saveParseHistory(filteredHistory)
   return success ? id : null
 }
 

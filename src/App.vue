@@ -54,8 +54,8 @@ window.addEventListener('storage', (e) => {
 window.__refreshTransition = loadTransitionConfig
 
 // 暴露检查更新方法给设置页面调用
-window.__checkUpdate = (showNoUpdate) => {
-  updaterRef.value?.checkUpdate(showNoUpdate)
+window.__checkUpdate = async (showNoUpdate) => {
+  return await updaterRef.value?.checkUpdate(showNoUpdate)
 }
 </script>
 
