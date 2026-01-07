@@ -5,9 +5,22 @@
 
 import { readTextFile, writeTextFile, exists, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs'
 import { appDataDir } from '@tauri-apps/api/path'
+import { loadConfig } from '@/services/config'
 
 const HISTORY_FILE = 'parse_history.json'
-const MAX_RECORDS = 100
+const DEFAULT_MAX_RECORDS = 100
+
+/**
+ * 获取最大记录数量配置
+ */
+function getMaxRecords() {
+  try {
+    const config = loadConfig()
+    return config.history?.maxRecords || DEFAULT_MAX_RECORDS
+  } catch {
+    return DEFAULT_MAX_RECORDS
+  }
+}
 
 /**
  * 确保 AppData 目录存在
@@ -108,8 +121,9 @@ export async function addParseHistory(record) {
   filteredHistory.unshift(newRecord)
   
   // 限制最大条数
-  if (filteredHistory.length > MAX_RECORDS) {
-    filteredHistory.splice(MAX_RECORDS)
+  const maxRecords = getMaxRecords()
+  if (filteredHistory.length > maxRecords) {
+    filteredHistory.splice(maxRecords)
   }
   
   const success = await saveParseHistory(filteredHistory)

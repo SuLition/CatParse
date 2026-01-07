@@ -54,3 +54,43 @@ export const extractUrlFromText = (text) => {
   
   return text.trim();
 };
+
+/**
+ * 自动检测链接平台
+ * @param {string} text - 输入的文本或链接
+ * @returns {string|null} 平台标识，未识别返回 null
+ */
+export const detectPlatform = (text) => {
+  if (!text) return null;
+  
+  const platformPatterns = [
+    // B站
+    { platform: 'bilibili', patterns: [
+      /bilibili\.com/i,
+      /b23\.tv/i,
+      /BV[a-zA-Z0-9]+/i
+    ]},
+    // 抖音
+    { platform: 'douyin', patterns: [
+      /douyin\.com/i,
+      /v\.douyin\.com/i,
+      /iesdouyin\.com/i
+    ]},
+    // 小红书
+    { platform: 'xiaohongshu', patterns: [
+      /xiaohongshu\.com/i,
+      /xhslink\.com/i,
+      /\u5c0f红书/i
+    ]}
+  ];
+  
+  for (const { platform, patterns } of platformPatterns) {
+    for (const pattern of patterns) {
+      if (pattern.test(text)) {
+        return platform;
+      }
+    }
+  }
+  
+  return null;
+};

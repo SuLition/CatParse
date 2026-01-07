@@ -12,7 +12,8 @@ const defaultDownloadPath = ref('')
 
 // 表单数据
 const form = reactive({
-  download: { savePath: '' }
+  download: { savePath: '' },
+  history: { maxRecords: 100 }
 })
 
 // 缓存大小
@@ -100,11 +101,21 @@ const resetDownloadPath = () => {
   saveConfig({ ...config, download: { ...config.download, savePath: '' } })
 }
 
+// 修改历史记录最大数量
+const onMaxRecordsChange = () => {
+  const config = loadConfig()
+  saveConfig({ ...config, history: { ...config.history, maxRecords: form.history.maxRecords } })
+  toast.success('已保存')
+}
+
 // 加载配置
 const loadForm = async () => {
   const config = loadConfig()
   if (config.download) {
     Object.assign(form.download, config.download)
+  }
+  if (config.history) {
+    Object.assign(form.history, config.history)
   }
 
   // 加载系统默认下载路径
@@ -151,6 +162,28 @@ onMounted(() => {
         </div>
       </div>
       <p class="setting-hint">{{ form.download.savePath || '当前使用系统默认下载目录' }}</p>
+    </div>
+
+    <!-- 历史记录最大数量 -->
+    <div class="setting-group">
+      <div class="setting-item">
+        <div class="setting-row">
+          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="setting-label">历史记录数量</span>
+        </div>
+        <div class="number-input-group">
+          <input v-model.number="form.history.maxRecords" 
+                 type="number" 
+                 min="10" 
+                 max="500" 
+                 class="number-input"
+                 @change="onMaxRecordsChange" />
+          <span class="number-unit">条</span>
+        </div>
+      </div>
+      <p class="setting-hint">最多保存的解析历史记录数量（10-500）</p>
     </div>
 
     <!-- 缓存清理 -->
@@ -314,6 +347,41 @@ onMounted(() => {
 .btn-icon:hover {
   background: var(--bg-hover, #4a4c50);
   color: var(--text-primary, #ffffff);
+}
+
+/* 数字输入框 */
+.number-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.number-input {
+  width: 80px;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #2b2d30);
+  border: 1px solid var(--border-primary, #3d3f43);
+  border-radius: 6px;
+  color: var(--text-primary, #ffffff);
+  font-size: 13px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #4a9eff);
+}
+
+.number-unit {
+  font-size: 13px;
+  color: var(--text-tertiary, #6c6e73);
 }
 
 /* 缓存清理区域 */

@@ -6,7 +6,6 @@
 export const PLATFORM_NAMES = {
   bilibili: 'Bilibili',
   douyin: '抖音',
-  kuaishou: '快手',
   xiaohongshu: '小红书'
 }
 
@@ -14,7 +13,6 @@ export const PLATFORM_NAMES = {
 export const PLATFORM_COLORS = {
   bilibili: '#00a1d6',
   douyin: '#fe2c55',
-  kuaishou: '#ff6600',
   xiaohongshu: '#ff2442'
 }
 

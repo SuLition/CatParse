@@ -6,9 +6,16 @@ import {toggleTheme, useAppliedTheme} from '@/services/theme';
 const router = useRouter();
 const route = useRoute();
 
-const activeTab = computed(() => route.path);
 const appliedTheme = useAppliedTheme();
 const isDark = computed(() => appliedTheme.value === 'dark');
+
+// 判断菜单是否激活（支持子路由匹配）
+const isActive = (path) => {
+  if (path === '/settings') {
+    return route.path.startsWith('/settings');
+  }
+  return route.path === path;
+};
 
 const topMenuItems = [
   {id: '/parse', icon: 'search', title: '视频解析'},
@@ -43,7 +50,7 @@ const handleToggleTheme = () => {
       <div
           v-for="item in topMenuItems"
           :key="item.id"
-          :class="{ active: activeTab === item.id }"
+          :class="{ active: isActive(item.id) }"
           :title="item.title"
           class="sidebar-item"
           @click="handleMenuClick(item.id)"
@@ -98,7 +105,7 @@ const handleToggleTheme = () => {
       <div
           v-for="item in bottomMenuItems"
           :key="item.id"
-          :class="{ active: activeTab === item.id }"
+          :class="{ active: isActive(item.id) }"
           :title="item.title"
           class="sidebar-item"
           @click="handleMenuClick(item.id)"
@@ -106,9 +113,7 @@ const handleToggleTheme = () => {
         <svg v-if="item.icon === 'settings'" class="sidebar-icon" fill="none" viewBox="0 0 24 24"
              xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-          <path
-              d="M12 2L13 5L16 4L15 7L18 8L16 11L19 13L16 15L17 18L14 17L13 20L11 20L10 17L7 18L8 15L5 13L8 11L6 8L9 7L8 4L11 5L12 2Z"
-              stroke="currentColor" stroke-linejoin="round" stroke-width="2"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/>
         </svg>
       </div>
     </div>

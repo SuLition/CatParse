@@ -26,6 +26,11 @@ export const defaultConfig = {
     savePath: ''  // 空字符串表示使用系统默认下载目录
   },
   
+  // 历史记录设置
+  history: {
+    maxRecords: 100  // 最大记录数量
+  },
+  
   // 腾讯语音识别配置
   tencentAsr: {
     secretId: '',
