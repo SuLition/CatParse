@@ -1,7 +1,7 @@
-# 文案小助手
+# 文案助手
 
 <p align="center">
-  <img src="src-tauri/icons/icon.ico" width="128" height="128" alt="文案小助手">
+  <img src="src-tauri/icons/icon.ico" width="128" height="128" alt="文案助手">
 </p>
 
 <p align="center">
@@ -44,11 +44,11 @@
 |------|------|
 | 前端框架 | Vue 3.5 + Vite |
 | 桌面应用 | Tauri 2.x (Rust) |
-| 状态管理 | 组合式 API (Composables) |
+| 状态管理 | Pinia |
 | 路由 | Vue Router 4 |
 | UI 组件 | Arco Design Vue |
 | 通知 | vue-sonner |
-| 后端服务 | Python Flask (parser-service) |
+| 后端服务 | Python FastAPI (parser-service) |
 | AI 模型 | 豆包、DeepSeek、通义千问、混元 |
 
 ## 快速开始
@@ -151,6 +151,8 @@ npm run tauri:build
 ```bash
 npx tauri signer generate -w ~/.tauri/wenan-helper.key
 ```
+
+配置文件存储在 `%APPDATA%\com.wenanassistant.app\` 目录下，重装应用不会丢失配置。
 
 ## 许可证
 
