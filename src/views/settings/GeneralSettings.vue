@@ -2,7 +2,8 @@
 import { reactive, ref, onMounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { loadConfig, saveConfig, PAGE_TRANSITION_OPTIONS } from '@/services/config'
-import { setWindowEffect, useWindowEffect } from '@/services/theme'
+import { setWindowEffect, useWindowEffect, setAccentColor, useAccentColor } from '@/services/theme'
+import { ACCENT_COLOR_OPTIONS } from '@/constants/theme'
 import CustomSelect from '@/components/common/CustomSelect.vue'
 
 // 窗口效果选项
@@ -13,6 +14,9 @@ const WINDOW_EFFECT_OPTIONS = [
 
 // 窗口效果
 const windowEffect = useWindowEffect()
+
+// 主题色
+const accentColor = useAccentColor()
 
 // 自动检查更新
 const autoCheckUpdate = ref(true)
@@ -29,6 +33,13 @@ const form = reactive({
 const onWindowEffectChange = async (effect) => {
   await setWindowEffect(effect)
   toast.success(`窗口效果已切换为 ${WINDOW_EFFECT_OPTIONS.find(o => o.value === effect)?.label || effect}`)
+}
+
+// 切换主题色
+const onAccentColorChange = (colorKey) => {
+  setAccentColor(colorKey)
+  const color = ACCENT_COLOR_OPTIONS.find(o => o.value === colorKey)
+  toast.success(`主题色已切换为 ${color?.label || colorKey}`)
 }
 
 // 页面过渡效果变更
@@ -99,6 +110,31 @@ onMounted(() => {
                       @change="onWindowEffectChange"/>
       </div>
       <p class="setting-hint">Windows 11 原生毛玻璃效果（需要 Win11 22H2+）</p>
+    </div>
+
+    <!-- 主题色 -->
+    <div class="setting-group">
+      <div class="setting-item">
+        <div class="setting-row">
+          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          <span class="setting-label">主题色</span>
+        </div>
+        <div class="color-picker">
+          <button
+            v-for="color in ACCENT_COLOR_OPTIONS"
+            :key="color.value"
+            class="color-dot"
+            :class="{ active: accentColor === color.value }"
+            :style="{ '--color': color.color }"
+            :title="color.label"
+            @click="onAccentColorChange(color.value)"
+          />
+        </div>
+      </div>
+      <p class="setting-hint">应用的强调色，用于按钮、链接等元素</p>
     </div>
 
     <!-- 页面过渡 -->
@@ -280,5 +316,31 @@ input:checked + .slider:before {
   background: var(--accent-color, #4a9eff);
   border-color: var(--accent-color, #4a9eff);
   color: #fff;
+}
+
+/* 主题色选择器 */
+.color-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.color-dot:hover {
+  transform: scale(1.15);
+}
+
+.color-dot.active {
+  border-color: var(--text-primary, #ffffff);
+  box-shadow: 0 0 0 2px var(--color);
 }
 </style>

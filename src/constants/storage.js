@@ -18,7 +18,10 @@ export const STORAGE_KEYS = {
   THEME: 'wenan_theme',
   
   // 窗口效果
-  WINDOW_EFFECT: 'wenan_window_effect'
+  WINDOW_EFFECT: 'wenan_window_effect',
+  
+  // 主题色
+  ACCENT_COLOR: 'wenan_accent_color'
 }
 
 // 历史记录相关配置

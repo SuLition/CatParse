@@ -6,7 +6,7 @@
 import { ref, watch } from 'vue'
 import { getItem, setItem } from '../storage/localStorage'
 import { STORAGE_KEYS } from '@/constants/storage'
-import { THEME_MODES, DARK_THEME, LIGHT_THEME } from '@/constants/theme'
+import { THEME_MODES, DARK_THEME, LIGHT_THEME, ACCENT_COLORS } from '@/constants/theme'
 import { invoke } from '@tauri-apps/api/core'
 
 // 当前主题模式 (light / dark / system)
@@ -17,6 +17,9 @@ const appliedTheme = ref(THEME_MODES.DARK)
 
 // 窗口效果 (none / mica / acrylic)
 const windowEffect = ref('none')
+
+// 主题色
+const accentColor = ref('blue')
 
 // 系统主题媒体查询
 let systemThemeQuery = null
@@ -54,8 +57,26 @@ async function applyThemeToDOM(theme) {
   // 更新实际应用的主题
   appliedTheme.value = theme
   
+  // 应用主题色
+  applyAccentColorToDOM(accentColor.value)
+  
   // 应用窗口效果
   await applyWindowEffect(windowEffect.value, theme === THEME_MODES.DARK)
+}
+
+/**
+ * 应用主题色到 DOM
+ * @param {string} colorKey
+ */
+function applyAccentColorToDOM(colorKey) {
+  const color = ACCENT_COLORS[colorKey] || ACCENT_COLORS.blue
+  const root = document.documentElement
+  
+  root.style.setProperty('--accent-color', color.color)
+  root.style.setProperty('--accent-hover', color.hover)
+  root.style.setProperty('--accent-light', color.light)
+  root.style.setProperty('--accent-border', color.border)
+  root.style.setProperty('--scrollbar-hover', color.color)
 }
 
 /**
@@ -94,6 +115,10 @@ export async function initTheme() {
   // 加载窗口效果设置
   const savedEffect = getItem(STORAGE_KEYS.WINDOW_EFFECT, 'none')
   windowEffect.value = savedEffect
+  
+  // 加载主题色设置
+  const savedAccentColor = getItem(STORAGE_KEYS.ACCENT_COLOR, 'blue')
+  accentColor.value = savedAccentColor
   
   // 计算实际主题
   const actualTheme = savedMode === THEME_MODES.SYSTEM 
@@ -142,6 +167,28 @@ export async function setWindowEffect(effect) {
   windowEffect.value = effect
   setItem(STORAGE_KEYS.WINDOW_EFFECT, effect)
   await applyWindowEffect(effect, appliedTheme.value === THEME_MODES.DARK)
+}
+
+/**
+ * 设置主题色
+ * @param {string} colorKey
+ */
+export function setAccentColor(colorKey) {
+  if (!ACCENT_COLORS[colorKey]) {
+    console.warn('[Theme] 无效的主题色:', colorKey)
+    return
+  }
+  accentColor.value = colorKey
+  setItem(STORAGE_KEYS.ACCENT_COLOR, colorKey)
+  applyAccentColorToDOM(colorKey)
+}
+
+/**
+ * 获取当前主题色
+ * @returns {Ref<string>}
+ */
+export function useAccentColor() {
+  return accentColor
 }
 
 /**
@@ -195,5 +242,7 @@ export default {
   useAppliedTheme,
   isDarkTheme,
   setWindowEffect,
-  useWindowEffect
+  useWindowEffect,
+  setAccentColor,
+  useAccentColor
 }

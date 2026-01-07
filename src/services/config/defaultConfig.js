@@ -18,7 +18,8 @@ export const PAGE_TRANSITION_OPTIONS = [
 export const defaultConfig = {
   // 外观设置
   appearance: {
-    pageTransition: 'fade'  // 页面过渡效果: none, fade, slide-left, slide-right, slide-up, zoom
+    pageTransition: 'fade',  // 页面过渡效果: none, fade, slide-left, slide-right, slide-up, zoom
+    accentColor: 'blue'      // 主题色: blue, green, purple, orange, pink, cyan, red
   },
   
   // 下载设置

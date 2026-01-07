@@ -16,6 +16,66 @@ export const THEME_OPTIONS = [
     {value: 'system', label: '跟随系统'}
 ]
 
+// 主题色预设
+export const ACCENT_COLORS = {
+    blue: {
+        name: '天空蓝',
+        color: '#4a9eff',
+        hover: '#3d8fe8',
+        light: 'rgba(74, 158, 255, 0.15)',
+        border: 'rgba(74, 158, 255, 0.3)'
+    },
+    green: {
+        name: '翡翠绿',
+        color: '#2ecc71',
+        hover: '#27ae60',
+        light: 'rgba(46, 204, 113, 0.15)',
+        border: 'rgba(46, 204, 113, 0.3)'
+    },
+    purple: {
+        name: '薰衣紫',
+        color: '#a855f7',
+        hover: '#9333ea',
+        light: 'rgba(168, 85, 247, 0.15)',
+        border: 'rgba(168, 85, 247, 0.3)'
+    },
+    orange: {
+        name: '琥珀橙',
+        color: '#f59e0b',
+        hover: '#d97706',
+        light: 'rgba(245, 158, 11, 0.15)',
+        border: 'rgba(245, 158, 11, 0.3)'
+    },
+    pink: {
+        name: '玫瑰粉',
+        color: '#ec4899',
+        hover: '#db2777',
+        light: 'rgba(236, 72, 153, 0.15)',
+        border: 'rgba(236, 72, 153, 0.3)'
+    },
+    cyan: {
+        name: '青绿色',
+        color: '#06b6d4',
+        hover: '#0891b2',
+        light: 'rgba(6, 182, 212, 0.15)',
+        border: 'rgba(6, 182, 212, 0.3)'
+    },
+    red: {
+        name: '珊瑩红',
+        color: '#ef4444',
+        hover: '#dc2626',
+        light: 'rgba(239, 68, 68, 0.15)',
+        border: 'rgba(239, 68, 68, 0.3)'
+    }
+}
+
+// 主题色选项（用于设置页选择）
+export const ACCENT_COLOR_OPTIONS = Object.entries(ACCENT_COLORS).map(([key, value]) => ({
+    value: key,
+    label: value.name,
+    color: value.color
+}))
+
 // 深色主题 CSS 变量
 export const DARK_THEME = {
     '--bg-primary': '#1e1f22',

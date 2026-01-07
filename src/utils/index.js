@@ -1,6 +1,6 @@
 export const toasterOptions = {
     closeButton: true,
-    expand: true,
+    expand: false,
     position: 'bottom-right',
     closeButtonPosition: 'top-right',
     richColors: true,
