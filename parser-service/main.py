@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from utils import UrlParser
+from utils import UrlParser, post_with_retry, get_with_retry, request_with_retry
 from parsers import DouyinParser, BilibiliParser, XiaohongshuParser
 from parsers.xiaohongshu import get_xhs_cookie, set_xhs_cookie
 
@@ -294,13 +294,25 @@ async def extract_audio(request: ExtractAudioRequest):
         
         print(f"[ExtractAudio] Downloading video from: {video_url[:60]}...")
         
-        # 下载视频
+        # 下载视频（带重试机制）
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Referer': 'https://www.xiaohongshu.com/' if platform == 'xiaohongshu' else 'https://www.douyin.com/'
         }
         
-        resp = requests.get(video_url, headers=headers, stream=True, timeout=60)
+        success, result = get_with_retry(
+            url=video_url,
+            headers=headers,
+            stream=True,
+            timeout=60,
+            retries=3,
+            retry_delay=1.0
+        )
+        
+        if not success:
+            return ExtractAudioResponse(success=False, message=f"视频下载失败: {result}")
+        
+        resp = result
         resp.raise_for_status()
         
         with open(video_path, 'wb') as f:
@@ -443,97 +455,102 @@ async def proxy_audio(url: str = Query(...), platform: str = Query('bilibili')):
 @app.post("/proxy/bilibili")
 async def proxy_bilibili(request: ProxyRequest):
     """B站 API 代理"""
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://www.bilibili.com',
-            'Origin': 'https://www.bilibili.com',
-            'Accept': 'application/json',
-        }
-        if request.headers:
-            headers.update(request.headers)
-        
-        if request.method.upper() == 'GET':
-            resp = requests.get(request.url, headers=headers, timeout=15)
-        else:
-            resp = requests.post(request.url, headers=headers, data=request.body, timeout=15)
-        
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.bilibili.com',
+        'Origin': 'https://www.bilibili.com',
+        'Accept': 'application/json',
+    }
+    if request.headers:
+        headers.update(request.headers)
+    
+    method = request.method.upper()
+    success, result = request_with_retry(
+        method=method,
+        url=request.url,
+        headers=headers,
+        data=request.body if method == 'POST' else None,
+        timeout=15,
+        retries=3,
+        retry_delay=1.0
+    )
+    
+    if success:
         return {
             'success': True,
-            'status': resp.status_code,
-            'data': resp.json() if resp.headers.get('content-type', '').startswith('application/json') else resp.text,
-            'cookies': dict(resp.cookies)
+            'status': result.status_code,
+            'data': result.json() if result.headers.get('content-type', '').startswith('application/json') else result.text,
+            'cookies': dict(result.cookies)
         }
-    except Exception as e:
-        print(f"[Proxy Bilibili] Error: {e}")
-        return {'success': False, 'message': str(e)}
+    else:
+        print(f"[Proxy Bilibili] Failed: {result}")
+        return {'success': False, 'message': result}
 
 
 @app.post("/proxy/tencent")
 async def proxy_tencent(request: ProxyRequest):
     """腾讯云 API 代理"""
-    try:
-        headers = {
-            'Content-Type': 'application/json; charset=utf-8',
-        }
-        if request.headers:
-            headers.update(request.headers)
-        
-        # body 是 JSON 字符串，需要编码为 bytes
-        body_data = request.body.encode('utf-8') if request.body else None
-        
-        print(f"[Proxy Tencent] URL: {request.url}")
-        print(f"[Proxy Tencent] Headers: {list(headers.keys())}")
-        
-        resp = requests.post(
-            request.url,
-            headers=headers,
-            data=body_data,
-            timeout=30
-        )
-        
-        print(f"[Proxy Tencent] Response status: {resp.status_code}")
-        
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+    }
+    if request.headers:
+        headers.update(request.headers)
+    
+    body_data = request.body.encode('utf-8') if request.body else None
+    
+    print(f"[Proxy Tencent] URL: {request.url}")
+    print(f"[Proxy Tencent] Headers: {list(headers.keys())}")
+    
+    success, result = post_with_retry(
+        url=request.url,
+        headers=headers,
+        data=body_data,
+        timeout=30,
+        retries=3,
+        retry_delay=1.0
+    )
+    
+    if success:
+        print(f"[Proxy Tencent] Response status: {result.status_code}")
         return {
             'success': True,
-            'status': resp.status_code,
-            'data': resp.json()
+            'status': result.status_code,
+            'data': result.json()
         }
-    except Exception as e:
-        import traceback
-        print(f"[Proxy Tencent] Error: {e}")
-        traceback.print_exc()
-        return {'success': False, 'message': str(e)}
+    else:
+        print(f"[Proxy Tencent] Failed: {result}")
+        return {'success': False, 'message': result}
 
 
 @app.post("/proxy/doubao")
 async def proxy_doubao(request: ProxyRequest):
     """豆包 AI API 代理"""
-    try:
-        headers = {
-            'Content-Type': 'application/json',
-        }
-        if request.headers:
-            headers.update(request.headers)
-        
-        # body 是 JSON 字符串，需要编码为 bytes
-        body_data = request.body.encode('utf-8') if request.body else None
-        
-        resp = requests.post(
-            request.url,
-            headers=headers,
-            data=body_data,
-            timeout=60
-        )
-        
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    if request.headers:
+        headers.update(request.headers)
+    
+    body_data = request.body.encode('utf-8') if request.body else None
+    
+    success, result = post_with_retry(
+        url=request.url,
+        headers=headers,
+        data=body_data,
+        timeout=60,
+        retries=3,
+        retry_delay=1.0
+    )
+    
+    if success:
         return {
             'success': True,
-            'status': resp.status_code,
-            'data': resp.json()
+            'status': result.status_code,
+            'data': result.json()
         }
-    except Exception as e:
-        print(f"[Proxy Doubao] Error: {e}")
-        return {'success': False, 'message': str(e)}
+    else:
+        print(f"[Proxy Doubao] Failed: {result}")
+        return {'success': False, 'message': result}
 
 
 # ==================== 主程序 ====================
