@@ -23,8 +23,8 @@ const pageTransition = computed(() => configStore.appearance.pageTransition || '
 // 初始化并显示窗口
 onMounted(async () => {
   try {
-    // 加载配置
-    configStore.load()
+    // 加载配置（必须等待完成，否则主题等设置无法正确恢复）
+    await configStore.load()
     // 初始化主题
     await themeStore.init()
     // 自动检查更新
