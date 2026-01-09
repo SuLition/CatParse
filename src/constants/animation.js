@@ -63,7 +63,7 @@ export const EASING = {
  * @returns {string} CSS 时间值
  */
 function calcDuration(baseDuration, speedMultiplier) {
-    const duration = Math.max(10, baseDuration * speedMultiplier)
+    const duration = Math.max(0, baseDuration * speedMultiplier)
     return `${duration}ms`
 }
 
