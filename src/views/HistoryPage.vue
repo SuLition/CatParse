@@ -476,7 +476,7 @@ const clearAll = async () => {
 .history-list > .slide-up-leave-active,
 .history-list > .zoom-leave-active {
   position: absolute;
-  left: 40px;
-  right: 40px;
+  left: 0;
+  right: 0;
 }
 </style>
