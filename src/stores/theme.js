@@ -3,189 +3,189 @@
  * 管理应用的主题、主题色、窗口效果（使用 configStore 统一存储）
  */
 
-import { defineStore } from 'pinia'
-import { useConfigStore } from './config'
-import { THEME_MODES, DARK_THEME, LIGHT_THEME, ACCENT_COLORS } from '@/constants/theme'
-import { invoke } from '@tauri-apps/api/core'
+import {defineStore} from 'pinia'
+import {useConfigStore} from './config'
+import {THEME_MODES, DARK_THEME, LIGHT_THEME, ACCENT_COLORS} from '@/constants/theme'
+import {invoke} from '@tauri-apps/api/core'
 
 export const useThemeStore = defineStore('theme', {
-  state: () => ({
-    // 主题模式 (light / dark / system)
-    mode: THEME_MODES.DARK,
-    // 实际应用的主题 (light / dark)
-    appliedTheme: THEME_MODES.DARK,
-    // 主题色
-    accentColor: 'blue',
-    // 窗口效果 (none / mica / acrylic)
-    windowEffect: 'none',
-    // 系统主题媒体查询
-    _systemThemeQuery: null
-  }),
+    state: () => ({
+        // 主题模式 (light / dark / system)
+        mode: THEME_MODES.DARK,
+        // 实际应用的主题 (light / dark)
+        appliedTheme: THEME_MODES.DARK,
+        // 主题色
+        accentColor: 'blue',
+        // 窗口效果 (none / mica )
+        windowEffect: 'none',
+        // 系统主题媒体查询
+        _systemThemeQuery: null
+    }),
 
-  getters: {
-    isDark: (state) => state.appliedTheme === THEME_MODES.DARK
-  },
-
-  actions: {
-    /**
-     * 保存主题数据到 configStore
-     */
-    async _saveThemeData() {
-      const configStore = useConfigStore()
-      await configStore.update('appearance.themeMode', this.mode)
-      await configStore.update('appearance.windowEffect', this.windowEffect)
-      await configStore.update('appearance.accentColor', this.accentColor)
+    getters: {
+        isDark: (state) => state.appliedTheme === THEME_MODES.DARK
     },
 
-    /**
-     * 初始化主题
-     */
-    async init() {
-      const configStore = useConfigStore()
-      const appearance = configStore.config.appearance || {}
-      
-      this.mode = appearance.themeMode || THEME_MODES.DARK
-      this.windowEffect = appearance.windowEffect || 'none'
-      this.accentColor = appearance.accentColor || 'blue'
+    actions: {
+        /**
+         * 保存主题数据到 configStore
+         */
+        async _saveThemeData() {
+            const configStore = useConfigStore()
+            await configStore.update('appearance.themeMode', this.mode)
+            await configStore.update('appearance.windowEffect', this.windowEffect)
+            await configStore.update('appearance.accentColor', this.accentColor)
+        },
 
-      // 计算实际主题
-      const actualTheme = this.mode === THEME_MODES.SYSTEM
-        ? this._getSystemTheme()
-        : this.mode
+        /**
+         * 初始化主题
+         */
+        async init() {
+            const configStore = useConfigStore()
+            const appearance = configStore.config.appearance || {}
 
-      // 应用主题
-      await this._applyThemeToDOM(actualTheme)
+            this.mode = appearance.themeMode || THEME_MODES.DARK
+            this.windowEffect = appearance.windowEffect || 'none'
+            this.accentColor = appearance.accentColor || 'blue'
 
-      // 监听系统主题变化
-      if (typeof window !== 'undefined' && window.matchMedia) {
-        this._systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
-        this._systemThemeQuery.addEventListener('change', (e) => {
-          if (this.mode === THEME_MODES.SYSTEM) {
-            this._applyThemeToDOM(e.matches ? THEME_MODES.DARK : THEME_MODES.LIGHT)
-          }
-        })
-      }
-    },
+            // 计算实际主题
+            const actualTheme = this.mode === THEME_MODES.SYSTEM
+                ? this._getSystemTheme()
+                : this.mode
 
-    /**
-     * 设置主题模式
-     */
-    async setTheme(mode) {
-      this.mode = mode
-      await this._saveThemeData()
+            // 应用主题
+            await this._applyThemeToDOM(actualTheme)
 
-      const actualTheme = mode === THEME_MODES.SYSTEM
-        ? this._getSystemTheme()
-        : mode
+            // 监听系统主题变化
+            if (typeof window !== 'undefined' && window.matchMedia) {
+                this._systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+                this._systemThemeQuery.addEventListener('change', (e) => {
+                    if (this.mode === THEME_MODES.SYSTEM) {
+                        this._applyThemeToDOM(e.matches ? THEME_MODES.DARK : THEME_MODES.LIGHT)
+                    }
+                })
+            }
+        },
 
-      await this._applyThemeToDOM(actualTheme)
-    },
+        /**
+         * 设置主题模式
+         */
+        async setTheme(mode) {
+            this.mode = mode
+            await this._saveThemeData()
 
-    /**
-     * 切换主题（在亮色和暗色之间切换）
-     */
-    async toggleTheme() {
-      const newTheme = this.appliedTheme === THEME_MODES.DARK
-        ? THEME_MODES.LIGHT
-        : THEME_MODES.DARK
+            const actualTheme = mode === THEME_MODES.SYSTEM
+                ? this._getSystemTheme()
+                : mode
 
-      await this.setTheme(newTheme)
-    },
+            await this._applyThemeToDOM(actualTheme)
+        },
 
-    /**
-     * 设置主题色
-     */
-    async setAccentColor(colorKey) {
-      if (!ACCENT_COLORS[colorKey]) {
-        console.warn('[Theme] 无效的主题色:', colorKey)
-        return
-      }
-      this.accentColor = colorKey
-      await this._saveThemeData()
-      this._applyAccentColorToDOM(colorKey)
-    },
+        /**
+         * 切换主题（在亮色和暗色之间切换）
+         */
+        async toggleTheme() {
+            const newTheme = this.appliedTheme === THEME_MODES.DARK
+                ? THEME_MODES.LIGHT
+                : THEME_MODES.DARK
 
-    /**
-     * 设置窗口效果
-     */
-    async setWindowEffect(effect) {
-      this.windowEffect = effect
-      await this._saveThemeData()
-      await this._applyWindowEffect(effect, this.appliedTheme === THEME_MODES.DARK)
-    },
+            await this.setTheme(newTheme)
+        },
 
-    /**
-     * 获取系统主题偏好
-     */
-    _getSystemTheme() {
-      if (typeof window !== 'undefined' && window.matchMedia) {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? THEME_MODES.DARK
-          : THEME_MODES.LIGHT
-      }
-      return THEME_MODES.DARK
-    },
+        /**
+         * 设置主题色
+         */
+        async setAccentColor(colorKey) {
+            if (!ACCENT_COLORS[colorKey]) {
+                console.warn('[Theme] 无效的主题色:', colorKey)
+                return
+            }
+            this.accentColor = colorKey
+            await this._saveThemeData()
+            this._applyAccentColorToDOM(colorKey)
+        },
 
-    /**
-     * 应用主题到 DOM
-     */
-    async _applyThemeToDOM(theme) {
-      const root = document.documentElement
-      const themeVars = theme === THEME_MODES.LIGHT ? LIGHT_THEME : DARK_THEME
+        /**
+         * 设置窗口效果
+         */
+        async setWindowEffect(effect) {
+            this.windowEffect = effect
+            await this._saveThemeData()
+            await this._applyWindowEffect(effect, this.appliedTheme === THEME_MODES.DARK)
+        },
 
-      // 设置 CSS 变量
-      Object.entries(themeVars).forEach(([key, value]) => {
-        root.style.setProperty(key, value)
-      })
+        /**
+         * 获取系统主题偏好
+         */
+        _getSystemTheme() {
+            if (typeof window !== 'undefined' && window.matchMedia) {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? THEME_MODES.DARK
+                    : THEME_MODES.LIGHT
+            }
+            return THEME_MODES.DARK
+        },
 
-      // 设置 html class
-      root.classList.remove('light', 'dark')
-      root.classList.add(theme)
+        /**
+         * 应用主题到 DOM
+         */
+        async _applyThemeToDOM(theme) {
+            const root = document.documentElement
+            const themeVars = theme === THEME_MODES.LIGHT ? LIGHT_THEME : DARK_THEME
 
-      // 更新实际应用的主题
-      this.appliedTheme = theme
+            // 设置 CSS 变量
+            Object.entries(themeVars).forEach(([key, value]) => {
+                root.style.setProperty(key, value)
+            })
 
-      // 应用主题色
-      this._applyAccentColorToDOM(this.accentColor)
+            // 设置 html class
+            root.classList.remove('light', 'dark')
+            root.classList.add(theme)
 
-      // 应用窗口效果
-      await this._applyWindowEffect(this.windowEffect, theme === THEME_MODES.DARK)
-    },
+            // 更新实际应用的主题
+            this.appliedTheme = theme
 
-    /**
-     * 应用主题色到 DOM
-     */
-    _applyAccentColorToDOM(colorKey) {
-      const color = ACCENT_COLORS[colorKey] || ACCENT_COLORS.blue
-      const root = document.documentElement
+            // 应用主题色
+            this._applyAccentColorToDOM(this.accentColor)
 
-      root.style.setProperty('--accent-color', color.color)
-      root.style.setProperty('--accent-hover', color.hover)
-      root.style.setProperty('--accent-light', color.light)
-      root.style.setProperty('--accent-border', color.border)
-      root.style.setProperty('--scrollbar-hover', color.color)
-    },
+            // 应用窗口效果
+            await this._applyWindowEffect(this.windowEffect, theme === THEME_MODES.DARK)
+        },
 
-    /**
-     * 应用窗口效果
-     */
-    async _applyWindowEffect(effect, isDark) {
-      try {
-        const result = await invoke('set_window_effect', {
-          effect: effect,
-          isDark: isDark
-        })
-        console.log('[WindowEffect]', result)
+        /**
+         * 应用主题色到 DOM
+         */
+        _applyAccentColorToDOM(colorKey) {
+            const color = ACCENT_COLORS[colorKey] || ACCENT_COLORS.blue
+            const root = document.documentElement
 
-        const root = document.documentElement
-        if (effect === 'none') {
-          root.classList.remove('window-effect-enabled')
-        } else {
-          root.classList.add('window-effect-enabled')
+            root.style.setProperty('--accent-color', color.color)
+            root.style.setProperty('--accent-hover', color.hover)
+            root.style.setProperty('--accent-light', color.light)
+            root.style.setProperty('--accent-border', color.border)
+            root.style.setProperty('--scrollbar-hover', color.color)
+        },
+
+        /**
+         * 应用窗口效果
+         */
+        async _applyWindowEffect(effect, isDark) {
+            try {
+                const result = await invoke('set_window_effect', {
+                    effect: effect,
+                    isDark: isDark
+                })
+                console.log('[WindowEffect]', result)
+
+                const root = document.documentElement
+                if (effect === 'none') {
+                    root.classList.remove('window-effect-enabled')
+                } else {
+                    root.classList.add('window-effect-enabled')
+                }
+            } catch (error) {
+                console.warn('[窗口效果] 设置失败:', error)
+            }
         }
-      } catch (error) {
-        console.warn('[窗口效果] 设置失败:', error)
-      }
     }
-  }
 })

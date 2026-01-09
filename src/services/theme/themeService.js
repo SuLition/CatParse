@@ -15,7 +15,7 @@ const themeMode = ref(THEME_MODES.DARK)
 const appliedTheme = ref(THEME_MODES.DARK)
 
 // 窗口效果 (none / mica / acrylic)
-const windowEffect = ref('none')
+const windowEffect = ref('mica')
 
 // 主题色
 const accentColor = ref('blue')
@@ -115,7 +115,7 @@ export async function initTheme() {
   themeMode.value = savedMode
   
   // 加载窗口效果设置
-  const savedEffect = appearance.windowEffect || 'none'
+  const savedEffect = appearance.windowEffect || 'mica'
   windowEffect.value = savedEffect
   
   // 加载主题色设置
