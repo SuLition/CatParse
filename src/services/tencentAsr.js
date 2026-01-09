@@ -121,7 +121,7 @@ export async function createRecognitionTask(url, format = 'mp3') {
   const params = {
     EngineModelType: engineType,
     ChannelNum: 1,
-    ResTextFormat: 0, // 返回纯文本
+    ResTextFormat: 1, // 0-带时间戳 1-纯文本 2-词级时间戳
     SourceType: 0, // URL方式
     Url: url
   }
@@ -141,7 +141,7 @@ export async function createRecognitionTaskWithData(base64Data, format = 'm4a') 
   const params = {
     EngineModelType: engineType,
     ChannelNum: 1,
-    ResTextFormat: 0, // 返回纯文本
+    ResTextFormat: 1, // 0-带时间戳 1-纯文本 2-词级时间戳
     SourceType: 1, // 本地数据方式
     Data: base64Data,
     DataLen: base64Data.length
@@ -162,6 +162,16 @@ export async function getTaskStatus(taskId) {
   
   const result = await callTencentApi('DescribeTaskStatus', params)
   return result.Data
+}
+
+/**
+ * 清理识别结果中的时间戳前缀
+ * 如: [0:0.000,0:30.798] 文本内容 => 文本内容
+ */
+function cleanTimestamps(text) {
+  if (!text) return text
+  // 匹配格式: [数字:数字.数字,数字:数字.数字] 或 [数字:数字.数字, 数字:数字.数字]
+  return text.replace(/^\[\d+:\d+\.\d+,\s*\d+:\d+\.\d+\]\s*/g, '').trim()
 }
 
 /**
@@ -219,7 +229,7 @@ export async function recognizeAudio(audioUrl, onProgress) {
   })
   
   if (onProgress) onProgress('done', '识别完成')
-  return result
+  return cleanTimestamps(result)
 }
 
 /**
@@ -246,7 +256,7 @@ export async function recognizeAudioWithData(base64Data, onProgress) {
   })
   
   if (onProgress) onProgress('done', '识别完成')
-  return result
+  return cleanTimestamps(result)
 }
 
 export default {
