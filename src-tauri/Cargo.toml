@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.2.5"
+version = "0.2.8"
 description = "CatParse - 视频解析工具"
 authors = ["you"]
 license = ""

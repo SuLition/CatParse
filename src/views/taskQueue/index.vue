@@ -19,7 +19,12 @@ const hasCardAnimation = computed(() => cardAnimation.value !== 'none');
 
 // 获取任务类型文本
 const getTypeText = (type) => {
-  return type === TASK_TYPE.EXTRACT ? '文案提取' : '文案改写';
+  switch (type) {
+    case TASK_TYPE.EXTRACT: return '文案提取';
+    case TASK_TYPE.REWRITE: return '文案改写';
+    case TASK_TYPE.DOWNLOAD: return '视频下载';
+    default: return '未知任务';
+  }
 };
 
 // 获取状态文本
@@ -44,15 +49,27 @@ const getStatusClass = (status) => {
 };
 
 // 获取进度条样式
-const getProgressStyle = (status) => {
-  if (status === TASK_STATUS.SUCCESS) {
+const getProgressStyle = (task) => {
+  if (task.status === TASK_STATUS.SUCCESS) {
     return {width: '100%'};
-  } else if (status === TASK_STATUS.RUNNING) {
-    return {width: '50%'};
-  } else if (status === TASK_STATUS.QUEUED) {
+  } else if (task.status === TASK_STATUS.RUNNING) {
+    // 下载任务使用真实进度
+    if (task.type === TASK_TYPE.DOWNLOAD) {
+      return {width: `${task.progress || 0}%`};
+    }
+    return {width: '50%'}; // 其他任务显示50%
+  } else if (task.status === TASK_STATUS.QUEUED) {
     return {width: '0%'};
   }
   return {width: '0%'};
+};
+
+// 获取状态文本（下载任务显示进度百分比）
+const getDisplayStatus = (task) => {
+  if (task.type === TASK_TYPE.DOWNLOAD && task.status === TASK_STATUS.RUNNING) {
+    return `${task.progress || 0}%`;
+  }
+  return getStatusText(task.status);
 };
 
 // 是否显示重试按钮
@@ -157,13 +174,13 @@ const formatTime = (timestamp) => {
               <div class="progress-track">
                 <div
                     :class="getStatusClass(task.status)"
-                    :style="getProgressStyle(task.status)"
+                    :style="getProgressStyle(task)"
                     class="progress-fill"
                 ></div>
               </div>
             </div>
             <span :class="getStatusClass(task.status)" class="task-status">
-              {{ getStatusText(task.status) }}
+              {{ getDisplayStatus(task) }}
             </span>
             <button
                 v-if="showRetryButton(task.status)"
@@ -226,13 +243,13 @@ const formatTime = (timestamp) => {
               <div class="progress-track">
                 <div
                     :class="getStatusClass(task.status)"
-                    :style="getProgressStyle(task.status)"
+                    :style="getProgressStyle(task)"
                     class="progress-fill"
                 ></div>
               </div>
             </div>
             <span :class="getStatusClass(task.status)" class="task-status">
-              {{ getStatusText(task.status) }}
+              {{ getDisplayStatus(task) }}
             </span>
             <button
                 v-if="showRetryButton(task.status)"

@@ -1,14 +1,9 @@
 <script setup>
-import {ref} from 'vue';
 import {toast} from 'vue-sonner';
 import CustomSelect from '@/components/common/CustomSelect.vue';
 import {formatDuration} from '@/utils/format.js';
 import {openDownloadDir} from '@/services/download/tauriDownload.js';
-import {
-  downloadBilibili,
-  downloadDouyin,
-  downloadXiaohongshu
-} from '@/services/download/downloadService.js';
+import {useTaskQueueStore, TASK_TYPE} from '@/stores';
 
 const props = defineProps({
   videoInfo: {
@@ -27,20 +22,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedQuality']);
 
-const isDownloading = ref(false);
-const downloadProgress = ref(0);
+// 任务队列 Store
+const taskQueueStore = useTaskQueueStore();
 
 const handleQualityChange = (value) => {
   emit('update:selectedQuality', value);
 };
 
-const handleDownload = async () => {
+const handleDownload = () => {
   if (props.selectedQuality === '' || props.selectedQuality === null || props.selectedQuality === undefined) {
     toast.warning('请选择下载清晰度');
     return;
   }
 
-  const fileName = (props.videoInfo.title || 'video').replace(/[\\/:*?"<>|]/g, '_');
   const selectedStream = props.qualityOptions.find(q => q.value === props.selectedQuality);
 
   if (!selectedStream) {
@@ -48,46 +42,24 @@ const handleDownload = async () => {
     return;
   }
 
-  isDownloading.value = true;
-  downloadProgress.value = 0;
+  const fileName = (props.videoInfo.title || 'video').replace(/[\\/:*?"<>|]/g, '_');
 
-  const onProgress = (progress) => {
-    downloadProgress.value = Math.min(Math.max(progress, 0), 100);
-  };
-
-  try {
-    if (props.videoInfo.platform === 'bilibili') {
-      await downloadBilibili(
-          selectedStream.stream.url,
-          `${fileName}_${selectedStream.stream.short}.mp4`,
-          onProgress,
-          {backupUrls: selectedStream.stream.backupUrl || []}
-      );
-    } else if (props.videoInfo.platform === 'douyin') {
-      await downloadDouyin(
-          selectedStream.stream.url,
-          `${fileName}_${selectedStream.stream.short}.mp4`,
-          onProgress,
-          {backupUrls: selectedStream.stream.backupUrls || []}
-      );
-    } else if (props.videoInfo.platform === 'xiaohongshu') {
-      await downloadXiaohongshu(
-          selectedStream.stream.url,
-          `${fileName}_${selectedStream.stream.short}.mp4`,
-          onProgress,
-          {backupUrls: selectedStream.stream.backupUrls || []}
-      );
+  // 添加到任务队列
+  taskQueueStore.addTask({
+    type: TASK_TYPE.DOWNLOAD,
+    historyId: props.videoInfo.historyId || null,
+    videoInfo: props.videoInfo,
+    params: {
+      downloadParams: {
+        url: selectedStream.stream.url,
+        fileName: `${fileName}_${selectedStream.stream.short}.mp4`,
+        backupUrls: selectedStream.stream.backupUrl || selectedStream.stream.backupUrls || [],
+        quality: selectedStream.label
+      }
     }
+  });
 
-    downloadProgress.value = 100;
-    toast.success('下载完成');
-  } catch (error) {
-    console.error('下载失败:', error);
-    toast.error('下载失败，请重试');
-  } finally {
-    isDownloading.value = false;
-    downloadProgress.value = 0;
-  }
+  toast.success('下载任务已添加到队列');
 };
 </script>
 
@@ -213,22 +185,15 @@ const handleDownload = async () => {
               @update:modelValue="handleQualityChange"
           />
           <button
-              :class="{ downloading: isDownloading }"
-              :disabled="isDownloading"
-              :style="isDownloading ? { '--progress': downloadProgress + '%' } : {}"
               class="download-button"
               @click="handleDownload"
           >
-            <svg v-if="!isDownloading" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <rect height="16" rx="2" stroke="currentColor" stroke-width="2" width="20" x="2" y="4"/>
               <path d="M2 8h20M2 16h20M6 4v4M6 16v4M18 4v4M18 16v4" stroke="currentColor" stroke-linecap="round"
                     stroke-width="2"/>
             </svg>
-            <svg v-else class="spin" fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            </svg>
-            <span class="download-text">{{ isDownloading ? downloadProgress + '%' : '下载' }}</span>
+            <span class="download-text">下载</span>
           </button>
           <button class="open-folder-btn" title="打开下载文件夹" @click="openDownloadDir">
             <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

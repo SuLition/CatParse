@@ -1,6 +1,6 @@
 /**
  * 任务队列 Store
- * 管理后台任务（文案提取、文案改写）
+ * 管理后台任务（文案提取、文案改写、视频下载）
  * 每个任务只有一种类型和一个状态
  */
 
@@ -21,7 +21,8 @@ export const TASK_STATUS = {
 // 任务类型常量
 export const TASK_TYPE = {
   EXTRACT: 'extract',     // 文案提取
-  REWRITE: 'rewrite'      // 文案改写
+  REWRITE: 'rewrite',     // 文案改写
+  DOWNLOAD: 'download'    // 视频下载
 }
 
 // 默认最大并行任务数
@@ -58,7 +59,7 @@ export const useTaskQueueStore = defineStore('taskQueue', {
     /**
      * 添加任务
      * @param {Object} taskData - 任务数据
-     * @param {string} taskData.type - 任务类型 (extract/rewrite)
+     * @param {string} taskData.type - 任务类型 (extract/rewrite/download)
      * @param {number} taskData.historyId - 关联的历史记录ID
      * @param {Object} taskData.videoInfo - 完整视频信息
      * @param {Object} taskData.params - 任务参数
@@ -69,7 +70,7 @@ export const useTaskQueueStore = defineStore('taskQueue', {
       
       const task = {
         id: taskId,
-        type: taskData.type, // 'extract' 或 'rewrite'
+        type: taskData.type, // 'extract' / 'rewrite' / 'download'
         historyId: taskData.historyId,
         cover: videoInfo.cover || '',
         title: videoInfo.title || '未命名任务',
@@ -78,7 +79,10 @@ export const useTaskQueueStore = defineStore('taskQueue', {
         params: taskData.params || {},
         status: TASK_STATUS.QUEUED,
         error: null,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        // 下载任务特有字段
+        progress: 0,
+        progressText: ''
       }
       
       this.tasks.unshift(task)
@@ -105,6 +109,11 @@ export const useTaskQueueStore = defineStore('taskQueue', {
       if (task && task.status === TASK_STATUS.ERROR) {
         task.status = TASK_STATUS.QUEUED
         task.error = null
+        // 下载任务重置进度
+        if (task.type === TASK_TYPE.DOWNLOAD) {
+          task.progress = 0
+          task.progressText = ''
+        }
         this._scheduleNext()
       }
     },
@@ -121,6 +130,8 @@ export const useTaskQueueStore = defineStore('taskQueue', {
             this._executeExtract(task)
           } else if (task.type === TASK_TYPE.REWRITE) {
             this._executeRewrite(task)
+          } else if (task.type === TASK_TYPE.DOWNLOAD) {
+            this._executeDownload(task)
           }
         }
       }
@@ -262,6 +273,68 @@ export const useTaskQueueStore = defineStore('taskQueue', {
         task.status = TASK_STATUS.ERROR
         task.error = error.message
         toast.error(`「${task.title}」改写失败: ${error.message}`)
+      } finally {
+        this.runningCount--
+        this._scheduleNext()
+      }
+    },
+
+    async _executeDownload(task) {
+      task.status = TASK_STATUS.RUNNING
+      task.progress = 0
+      task.progressText = '准备下载...'
+      this.runningCount++
+      
+      try {
+        const { downloadBilibili, downloadDouyin, downloadXiaohongshu } = 
+          await import('@/services/download/downloadService.js')
+        
+        const { downloadParams } = task.params
+        const platform = task.platform
+        
+        const onProgress = (progress) => {
+          task.progress = Math.min(Math.max(progress, 0), 100)
+          task.progressText = `${task.progress}%`
+        }
+        
+        if (platform === 'bilibili') {
+          await downloadBilibili(
+            downloadParams.url,
+            downloadParams.fileName,
+            onProgress,
+            { backupUrls: downloadParams.backupUrls || [] }
+          )
+        } else if (platform === 'douyin') {
+          await downloadDouyin(
+            downloadParams.url,
+            downloadParams.fileName,
+            onProgress,
+            { backupUrls: downloadParams.backupUrls || [] }
+          )
+        } else if (platform === 'xiaohongshu') {
+          await downloadXiaohongshu(
+            downloadParams.url,
+            downloadParams.fileName,
+            onProgress,
+            { backupUrls: downloadParams.backupUrls || [] }
+          )
+        } else {
+          throw new Error('不支持的平台')
+        }
+        
+        task.status = TASK_STATUS.SUCCESS
+        task.progress = 100
+        task.progressText = '完成'
+        toast.success(`「${task.title}」下载完成`)
+        
+        // 完成后自动删除
+        setTimeout(() => this.removeTask(task.id), 1500)
+        
+      } catch (error) {
+        console.error('视频下载失败:', error)
+        task.status = TASK_STATUS.ERROR
+        task.error = error.message
+        toast.error(`「${task.title}」下载失败: ${error.message}`)
       } finally {
         this.runningCount--
         this._scheduleNext()
