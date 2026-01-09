@@ -1,7 +1,7 @@
 <script setup>
-import {onMounted} from 'vue';
+import {onMounted, computed} from 'vue';
 import {useRouter} from 'vue-router';
-import {useHistoryStore} from '@/stores';
+import {useHistoryStore, useConfigStore} from '@/stores';
 import {storeToRefs} from 'pinia';
 import {getPlatformName, getPlatformColor} from '@/constants/platforms';
 import {toast} from 'vue-sonner';
@@ -10,7 +10,12 @@ const router = useRouter();
 
 // Store
 const historyStore = useHistoryStore();
+const configStore = useConfigStore();
 const {list: historyList, loading} = storeToRefs(historyStore);
+
+// 卡片动画配置
+const cardAnimation = computed(() => configStore.appearance.cardAnimation || 'fade');
+const hasCardAnimation = computed(() => cardAnimation.value !== 'none');
 
 // 加载历史记录
 onMounted(async () => {
@@ -80,7 +85,8 @@ const clearAll = async () => {
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="historyList.length === 0" class="empty-state">
+    <Transition name="fade">
+      <div v-if="!loading && historyList.length === 0" class="empty-state">
       <svg class="empty-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
         <path
             d="M340.64 488.15c-11.05 0-20-8.95-20-20v-54.63c0-11.05 8.95-20 20-20s20 8.95 20 20v54.63c0 11.05-8.95 20-20 20zM494.87 484.92c-5.79 0-11.54-2.51-15.5-7.34l-20.15-24.64c-6.06-7.41-6.02-18.08 0.1-25.44l22.12-26.61c7.06-8.5 19.67-9.66 28.16-2.6s9.66 19.67 2.6 28.16l-11.58 13.94 9.71 11.88c6.99 8.55 5.73 21.15-2.83 28.14-3.72 3.04-8.2 4.52-12.65 4.52zM844.98 809.94c-8.45 0-16.9-3.21-23.33-9.62-6.25-6.23-9.7-14.52-9.69-23.34 0-8.82 3.44-17.11 9.69-23.34 12.86-12.82 33.79-12.82 46.65 0 6.25 6.23 9.69 14.52 9.69 23.34s-3.44 17.11-9.69 23.34c-6.43 6.41-14.88 9.62-23.33 9.62z m9.21-23.78h0.01-0.01z m-14.12-14.17c-1.31 1.31-2.07 3.13-2.07 4.99s0.75 3.68 2.07 4.99c2.71 2.7 7.12 2.7 9.82 0l0.06-0.06-9.88-9.91z m4.91-2.02c-1.78 0-3.56 0.67-4.91 2.02l9.88 9.92c1.28-1.3 2.01-3.09 2.01-4.93s-0.75-3.68-2.07-4.99a6.928 6.928 0 0 0-4.91-2.03z"
@@ -90,10 +96,64 @@ const clearAll = async () => {
             fill="currentColor"/>
       </svg>
       <p class="empty-text">还真是空旷啊</p>
-    </div>
+      </div>
+    </Transition>
 
     <!-- 历史列表 -->
-    <div v-else class="history-list">
+    <TransitionGroup v-if="hasCardAnimation && !loading" :name="cardAnimation" tag="div" class="history-list">
+      <div v-for="item in historyList" :key="item.id" class="history-card">
+        <!-- 左侧封面图 -->
+        <div class="card-cover">
+          <img v-if="item.cover" :alt="item.title" :src="item.cover"/>
+          <div v-else class="cover-placeholder">
+            <svg fill="none" viewBox="0 0 24 24">
+              <path
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+          </div>
+          <!-- 平台标签 -->
+          <span :style="{ background: getPlatformColor(item.platform) }" class="platform-badge">
+            {{ getPlatformName(item.platform) }}
+          </span>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="card-content">
+          <!-- 标题 -->
+          <h3 class="card-title">{{ item.title }}</h3>
+
+          <!-- 文案区域（带悬浮复制按钮） -->
+          <div class="card-text-wrapper">
+            <p class="card-text">{{ getDisplayText(item) }}</p>
+            <button v-if="hasText(item)" class="copy-btn" title="复制文案" @click="handleCopy(item)">
+              <svg fill="none" viewBox="0 0 24 24">
+                <rect height="13" rx="2" stroke="currentColor" stroke-width="2" width="13" x="9" y="9"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- 底部操作 -->
+          <div class="card-footer">
+            <span class="create-time">{{ item.createTime }}</span>
+            <div class="card-actions">
+              <button class="action-btn primary" @click="handleViewRecord(item)">查看记录</button>
+              <button class="action-btn danger" title="删除" @click="handleDelete(item.id)">
+                <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+                  <path
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </TransitionGroup>
+
+    <!-- 无动画版本 -->
+    <div v-else-if="!loading" class="history-list">
       <div v-for="item in historyList" :key="item.id" class="history-card">
         <!-- 左侧封面图 -->
         <div class="card-cover">
@@ -153,7 +213,8 @@ const clearAll = async () => {
   display: flex;
   flex-direction: column;
   padding: 40px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  position: relative;
 }
 
 .history-header {
@@ -187,12 +248,17 @@ const clearAll = async () => {
 }
 
 .empty-state {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
+  pointer-events: none;
 }
 
 .empty-icon {
@@ -210,6 +276,7 @@ const clearAll = async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
 }
 
 /* 卡片布局 */
@@ -402,5 +469,16 @@ const clearAll = async () => {
   background: #c42b1c;
   border-color: #c42b1c;
   color: #ffffff;
+}
+
+/* TransitionGroup 离开动画定位（仅对列表内卡片生效） */
+.history-list > .fade-leave-active,
+.history-list > .slide-left-leave-active,
+.history-list > .slide-right-leave-active,
+.history-list > .slide-up-leave-active,
+.history-list > .zoom-leave-active {
+  position: absolute;
+  left: 40px;
+  right: 40px;
 }
 </style>

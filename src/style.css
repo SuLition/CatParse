@@ -266,3 +266,109 @@
     transition: width 0.3s ease-out;
     z-index: 1;
 }
+
+/* vue-sonner Toast action 按钮样式 */
+[data-sonner-toaster] [data-button] {
+    background: transparent !important;
+    border: 1px solid var(--accent-color, #4a9eff) !important;
+    color: var(--accent-color, #4a9eff) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+[data-sonner-toaster] [data-button]:hover {
+    background: var(--accent-color, #4a9eff) !important;
+    color: #fff !important;
+}
+
+/* ========== 通用过渡动画 (Transition / TransitionGroup) ========== */
+/* 淡入淡出 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: all var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+.fade-move {
+    transition: transform var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+
+/* 左滑 */
+.slide-left-enter-active,
+.slide-left-leave-active {
+    transition: all var(--transition-normal, 300ms) var(--easing-ease-out, ease-out);
+}
+.slide-left-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+}
+.slide-left-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+.slide-left-move {
+    transition: transform var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+
+/* 右滑 */
+.slide-right-enter-active,
+.slide-right-leave-active {
+    transition: all var(--transition-normal, 300ms) var(--easing-ease-out, ease-out);
+}
+.slide-right-enter-from {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+.slide-right-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+}
+.slide-right-move {
+    transition: transform var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+
+/* 上滑 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: all var(--transition-normal, 300ms) var(--easing-ease-out, ease-out);
+}
+.slide-up-enter-from {
+    opacity: 0;
+    transform: translateY(30px);
+}
+.slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(-30px);
+}
+.slide-up-move {
+    transition: transform var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+
+/* 缩放 */
+.zoom-enter-active,
+.zoom-leave-active {
+    transition: all var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+.zoom-enter-from {
+    opacity: 0;
+    transform: scale(0.9);
+}
+.zoom-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+}
+.zoom-move {
+    transition: transform var(--transition-normal, 300ms) var(--easing-ease, ease);
+}
+
+/* 无效果 */
+.none-enter-active,
+.none-leave-active {
+    transition: none;
+}

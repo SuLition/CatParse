@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { ParsePage, HistoryPage, TaskQueuePage } from '@/views';
 import SettingsLayout from '@/views/settings/SettingsLayout.vue';
 import GeneralSettings from '@/views/settings/GeneralSettings.vue';
+import AppearanceSettings from '@/views/settings/AppearanceSettings.vue';
 import StorageSettings from '@/views/settings/StorageSettings.vue';
 import AccountSettings from '@/views/settings/AccountSettings.vue';
 import ApiSettings from '@/views/settings/ApiSettings.vue';
@@ -41,6 +42,12 @@ const routes = [
         name: 'SettingsGeneral',
         component: GeneralSettings,
         meta: { title: '通用设置' }
+      },
+      {
+        path: 'appearance',
+        name: 'SettingsAppearance',
+        component: AppearanceSettings,
+        meta: { title: '外观设置' }
       },
       {
         path: 'storage',

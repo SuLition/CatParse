@@ -219,17 +219,7 @@ const { visible, updateInfo, downloading, progress } = storeToRefs(updateStore)
   cursor: not-allowed;
 }
 
-/* 过渡动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity var(--transition-fast, 200ms) var(--easing-ease, ease);
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
+/* 对话框动画（配合全局 fade 动画） */
 .fade-enter-active .updater-dialog,
 .fade-leave-active .updater-dialog {
   transition: transform var(--transition-fast, 200ms) var(--easing-ease, ease), 

@@ -12,6 +12,7 @@ const pageTransition = computed(() => configStore.appearance.pageTransition || '
 // 子导航配置
 const navItems = [
   { id: 'general', label: '通用', icon: 'settings', path: '/settings/general' },
+  { id: 'appearance', label: '外观', icon: 'palette', path: '/settings/appearance' },
   { id: 'storage', label: '存储', icon: 'folder', path: '/settings/storage' },
   { id: 'account', label: '账号', icon: 'user', path: '/settings/account' },
   { id: 'api', label: 'API', icon: 'key', path: '/settings/api' },
@@ -57,6 +58,14 @@ const isActive = (path) => route.path === path
           <circle cx="12" cy="12" r="3"/>
           <path
               d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <svg v-else-if="item.icon === 'palette'" class="nav-icon" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
         </svg>
         <svg v-else-if="item.icon === 'folder'" class="nav-icon" fill="none" stroke="currentColor" stroke-width="2"
              viewBox="0 0 24 24">

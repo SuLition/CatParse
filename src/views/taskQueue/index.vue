@@ -1,16 +1,21 @@
 <script setup>
 import {computed} from 'vue';
-import {useTaskQueueStore, TASK_STATUS, TASK_TYPE} from '@/stores';
+import {useTaskQueueStore, useConfigStore, TASK_STATUS, TASK_TYPE} from '@/stores';
 import {storeToRefs} from 'pinia';
 import {getPlatformName, getPlatformColor} from '@/constants/platforms';
 
 // Store
 const taskQueueStore = useTaskQueueStore();
+const configStore = useConfigStore();
 const {tasks} = storeToRefs(taskQueueStore);
 
 // 计算属性
 const taskCount = computed(() => taskQueueStore.totalCount);
 const hasActiveTasks = computed(() => taskQueueStore.hasPendingTasks);
+
+// 卡片动画配置
+const cardAnimation = computed(() => configStore.appearance.cardAnimation || 'fade');
+const hasCardAnimation = computed(() => cardAnimation.value !== 'none');
 
 // 获取任务类型文本
 const getTypeText = (type) => {
@@ -90,7 +95,8 @@ const formatTime = (timestamp) => {
     </div>
 
     <!-- 空状态 -->
-    <div v-if="tasks.length === 0" class="empty-state">
+    <Transition name="fade">
+      <div v-if="tasks.length === 0" class="empty-state">
       <svg class="empty-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
         <path
             d="M772.89 858.21c-5.12 0-10.25-1.96-14.15-5.87l-142-142.24c-5.71-5.72-13.32-8.88-21.41-8.88H455.57c-116.5 0-211.28-94.78-211.28-211.28v-87.46c0-11.05 8.95-20 20-20s20 8.95 20 20v87.46c0 94.44 76.84 171.28 171.28 171.28h139.76c18.79 0 36.44 7.32 49.71 20.62l142 142.24c7.8 7.82 7.79 20.48-0.02 28.28-3.9 3.9-9.02 5.85-14.13 5.85z"
@@ -106,9 +112,79 @@ const formatTime = (timestamp) => {
             fill="currentColor"/>
       </svg>
       <p class="empty-text">暂时没有什么东西</p>
-    </div>
+      </div>
+    </Transition>
 
     <!-- 任务列表 -->
+    <TransitionGroup v-if="hasCardAnimation" :name="cardAnimation" tag="div" class="task-list">
+      <div v-for="task in tasks" :key="task.id" class="task-card">
+        <!-- 左侧封面图 -->
+        <div class="card-cover">
+          <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
+          <div v-else class="cover-placeholder">
+            <svg fill="none" viewBox="0 0 24 24">
+              <path
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+          </div>
+          <!-- 平台标签 -->
+          <span :style="{ background: getPlatformColor(task.platform) }" class="platform-badge">
+            {{ getPlatformName(task.platform) }}
+          </span>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="card-content">
+          <!-- 上部信息 -->
+          <div class="card-top">
+            <!-- 标题行 -->
+            <div class="card-header">
+              <h3 class="card-title">{{ task.title }}</h3>
+              <button class="remove-btn" title="移除任务" @click="handleRemoveTask(task.id)">
+                <svg fill="none" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 任务时间 -->
+            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>
+          </div>
+
+          <!-- 任务进度 -->
+          <div class="task-row">
+            <span class="task-label">{{ getTypeText(task.type) }}</span>
+            <div class="progress-wrapper">
+              <div class="progress-track">
+                <div
+                    :class="getStatusClass(task.status)"
+                    :style="getProgressStyle(task.status)"
+                    class="progress-fill"
+                ></div>
+              </div>
+            </div>
+            <span :class="getStatusClass(task.status)" class="task-status">
+              {{ getStatusText(task.status) }}
+            </span>
+            <button
+                v-if="showRetryButton(task.status)"
+                class="retry-btn"
+                title="重试"
+                @click="handleRetry(task.id)"
+            >
+              <svg fill="none" viewBox="0 0 24 24">
+                <path
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </TransitionGroup>
+
+    <!-- 无动画版本 -->
     <div v-else class="task-list">
       <div v-for="task in tasks" :key="task.id" class="task-card">
         <!-- 左侧封面图 -->
@@ -185,7 +261,8 @@ const formatTime = (timestamp) => {
   display: flex;
   flex-direction: column;
   padding: 40px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  position: relative;
 }
 
 .page-header {
@@ -226,12 +303,17 @@ const formatTime = (timestamp) => {
 
 /* 空状态 */
 .empty-state {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  pointer-events: none;
 }
 
 .empty-icon {
@@ -257,6 +339,7 @@ const formatTime = (timestamp) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
 }
 
 /* 任务卡片 */
@@ -494,5 +577,16 @@ const formatTime = (timestamp) => {
   background: var(--accent-color);
   border-color: var(--accent-color);
   color: #ffffff;
+}
+
+/* TransitionGroup 离开动画定位（仅对列表内卡片生效） */
+.task-list > .fade-leave-active,
+.task-list > .slide-left-leave-active,
+.task-list > .slide-right-leave-active,
+.task-list > .slide-up-leave-active,
+.task-list > .zoom-leave-active {
+  position: absolute;
+  left: 40px;
+  right: 40px;
 }
 </style>

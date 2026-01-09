@@ -33,7 +33,8 @@ export const defaultConfig = {
     windowEffect: 'none',    // 窗口效果: none, mica, acrylic
     pageTransition: 'fade',  // 页面过渡效果: none, fade, slide-left, slide-right, slide-up, zoom
     accentColor: 'blue',     // 主题色: blue, green, purple, orange, pink, cyan, red
-    animationSpeed: 'normal' // 动画速率: disabled, fast, normal, elegant
+    animationSpeed: 'normal', // 动画速率: disabled, fast, normal, elegant
+    cardAnimation: 'fade'    // 卡片动画: none, fade, slide-left, slide-right, slide-up, zoom
   },
   
   // 下载设置
