@@ -16,8 +16,11 @@ const taskCount = computed(() => taskQueueStore.totalCount);
 const hasActiveTasks = computed(() => taskQueueStore.hasPendingTasks);
 
 // 卡片动画配置
-const cardAnimation = computed(() => configStore.appearance.cardAnimation || 'fade');
-const hasCardAnimation = computed(() => cardAnimation.value !== 'none');
+const cardAnimation = computed(() => {
+  const anim = configStore.appearance.cardAnimation || 'fade';
+  return anim === 'none' ? 'none' : `card-${anim}`;
+});
+const hasCardAnimation = computed(() => configStore.appearance.cardAnimation !== 'none');
 
 // 创建任务下拉菜单状态
 const showCreateMenu = ref(false);
@@ -49,10 +52,28 @@ const openTextModal = () => {
 // 获取任务类型文本
 const getTypeText = (type) => {
   switch (type) {
-    case TASK_TYPE.EXTRACT: return '文案提取';
-    case TASK_TYPE.REWRITE: return '文案改写';
-    case TASK_TYPE.DOWNLOAD: return '视频下载';
-    default: return '未知任务';
+    case TASK_TYPE.EXTRACT:
+      return '文案提取';
+    case TASK_TYPE.REWRITE:
+      return '文案改写';
+    case TASK_TYPE.DOWNLOAD:
+      return '视频下载';
+    default:
+      return '未知任务';
+  }
+};
+
+// 获取任务类型样式类
+const getTypeClass = (type) => {
+  switch (type) {
+    case TASK_TYPE.EXTRACT:
+      return 'type-extract';
+    case TASK_TYPE.REWRITE:
+      return 'type-rewrite';
+    case TASK_TYPE.DOWNLOAD:
+      return 'type-download';
+    default:
+      return '';
   }
 };
 
@@ -116,11 +137,6 @@ const handleRemoveTask = (taskId) => {
   taskQueueStore.removeTask(taskId);
 };
 
-// 清空已完成任务
-const handleClearCompleted = () => {
-  taskQueueStore.clearCompleted();
-};
-
 // 格式化时间
 const formatTime = (timestamp) => {
   if (!timestamp) return '';
@@ -129,6 +145,39 @@ const formatTime = (timestamp) => {
     minute: '2-digit'
   });
 };
+
+// 测试用：添加模拟任务
+const handlePushTask = () => {
+  const types = [TASK_TYPE.EXTRACT, TASK_TYPE.REWRITE, TASK_TYPE.DOWNLOAD];
+  const platforms = ['douyin', 'bilibili', 'xiaohongshu'];
+  const titles = [
+    '测试视频 - 今天天气真不错',
+    '美食探店vlog',
+    '旅行随手拍'
+  ];
+
+  const randomType = types[Math.floor(Math.random() * types.length)];
+  const randomPlatform = platforms[Math.floor(Math.random() * platforms.length)];
+  const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+
+  taskQueueStore.addTask({
+    type: randomType,
+    historyId: Date.now(), // 模拟 historyId
+    platform: randomPlatform,
+    title: `${randomTitle} #${Date.now().toString().slice(-4)}`,
+    cover: '',
+    videoInfo: {
+      platform: randomPlatform,
+      title: randomTitle
+    }
+  });
+};
+
+const handleRemoveLatestTask = () => {
+  if (tasks.value.length > 0) {
+    taskQueueStore.removeTask(tasks.value[0].id);
+  }
+}
 </script>
 
 <template>
@@ -148,21 +197,28 @@ const formatTime = (timestamp) => {
             <div v-if="showCreateMenu" class="create-menu">
               <button class="menu-item" @click="openAudioModal">
                 <svg fill="none" viewBox="0 0 24 24">
-                  <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                  <path
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                 </svg>
                 <span>音频识别</span>
               </button>
               <button class="menu-item" @click="openTextModal">
                 <svg fill="none" viewBox="0 0 24 24">
-                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                  <path
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                 </svg>
                 <span>文案改写</span>
               </button>
             </div>
           </Transition>
         </div>
-        <button v-if="tasks.length > 0 && !hasActiveTasks" class="clear-button" @click="handleClearCompleted">
-          清空已完成
+        <button class="clear-button" title="添加任务" @click="handlePushTask">
+          添加任务
+        </button>
+        <button class="clear-button" title="添加任务" @click="handleRemoveLatestTask">
+          移除任务
         </button>
       </div>
     </div>
@@ -193,18 +249,20 @@ const formatTime = (timestamp) => {
         <div class="card-cover">
           <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
           <!-- 本地音频图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'" class="cover-placeholder audio">
+          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'"
+               class="cover-placeholder audio">
             <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              <circle cx="7" cy="18" r="2" fill="currentColor"/>
-              <circle cx="15" cy="16" r="2" fill="currentColor"/>
+              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"/>
+              <circle cx="7" cy="18" fill="currentColor" r="2"/>
+              <circle cx="15" cy="16" fill="currentColor" r="2"/>
             </svg>
           </div>
           <!-- 本地文案图标 -->
           <div v-else-if="task.platform === 'local' && task.data?.localType === 'text'" class="cover-placeholder text">
             <svg fill="none" viewBox="0 0 24 24">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
               <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
             </svg>
           </div>
@@ -237,12 +295,13 @@ const formatTime = (timestamp) => {
             </div>
 
             <!-- 任务时间 -->
-            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>
+            <!--            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>-->
+            <div class="task-time">添加时间: {{ cardAnimation }}</div>
           </div>
 
           <!-- 任务进度 -->
           <div class="task-row">
-            <span class="task-label">{{ getTypeText(task.type) }}</span>
+            <span :class="['task-type-tag', getTypeClass(task.type)]">{{ getTypeText(task.type) }}</span>
             <div class="progress-wrapper">
               <div class="progress-track">
                 <div
@@ -279,18 +338,20 @@ const formatTime = (timestamp) => {
         <div class="card-cover">
           <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
           <!-- 本地音频图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'" class="cover-placeholder audio">
+          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'"
+               class="cover-placeholder audio">
             <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              <circle cx="7" cy="18" r="2" fill="currentColor"/>
-              <circle cx="15" cy="16" r="2" fill="currentColor"/>
+              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"/>
+              <circle cx="7" cy="18" fill="currentColor" r="2"/>
+              <circle cx="15" cy="16" fill="currentColor" r="2"/>
             </svg>
           </div>
           <!-- 本地文案图标 -->
           <div v-else-if="task.platform === 'local' && task.data?.localType === 'text'" class="cover-placeholder text">
             <svg fill="none" viewBox="0 0 24 24">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
               <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
             </svg>
           </div>
@@ -328,7 +389,7 @@ const formatTime = (timestamp) => {
 
           <!-- 任务进度 -->
           <div class="task-row">
-            <span class="task-label">{{ getTypeText(task.type) }}</span>
+            <span :class="['task-type-tag', getTypeClass(task.type)]">{{ getTypeText(task.type) }}</span>
             <div class="progress-wrapper">
               <div class="progress-track">
                 <div
@@ -359,10 +420,10 @@ const formatTime = (timestamp) => {
     </div>
 
     <!-- 音频任务弹窗 -->
-    <CreateAudioTaskModal v-model:visible="showAudioModal" />
-    
+    <CreateAudioTaskModal v-model:visible="showAudioModal"/>
+
     <!-- 文案任务弹窗 -->
-    <CreateTextTaskModal v-model:visible="showTextModal" />
+    <CreateTextTaskModal v-model:visible="showTextModal"/>
   </div>
 </template>
 
@@ -373,6 +434,7 @@ const formatTime = (timestamp) => {
   flex-direction: column;
   padding: 40px;
   overflow-y: scroll;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -461,12 +523,15 @@ const formatTime = (timestamp) => {
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 16px;
-  transition: all var(--transition-normal) var(--easing-ease);
+  transform-origin: top;
+
 }
 
 .task-card:hover {
   border-color: var(--accent-color);
   box-shadow: 0 2px 12px var(--accent-light);
+  transition: border-color var(--transition-normal) var(--easing-ease),
+  box-shadow var(--transition-normal) var(--easing-ease);
 }
 
 /* 封面图 */
@@ -608,11 +673,29 @@ const formatTime = (timestamp) => {
   gap: 12px;
 }
 
-.task-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-  width: 60px;
+.task-type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
   flex-shrink: 0;
+}
+
+.task-type-tag.type-extract {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+
+.task-type-tag.type-rewrite {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+}
+
+.task-type-tag.type-download {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
 }
 
 .progress-wrapper {
@@ -710,17 +793,6 @@ const formatTime = (timestamp) => {
   background: var(--accent-color);
   border-color: var(--accent-color);
   color: #ffffff;
-}
-
-/* TransitionGroup 离开动画定位（仅对列表内卡片生效） */
-.task-list > .fade-leave-active,
-.task-list > .slide-left-leave-active,
-.task-list > .slide-right-leave-active,
-.task-list > .slide-up-leave-active,
-.task-list > .zoom-leave-active {
-  position: absolute;
-  left: 0;
-  right: 0;
 }
 
 /* 头部操作区 */

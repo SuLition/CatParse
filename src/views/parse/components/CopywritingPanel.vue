@@ -108,11 +108,14 @@ const handleExtractCopy = async () => {
   }
 
   // 创建后台任务
-  taskQueueStore.addTask({
+  const taskId = taskQueueStore.addTask({
     type: 'extract',
     historyId: props.currentHistoryId,
     videoInfo: JSON.parse(JSON.stringify(props.videoInfo))
   });
+
+  // 检查是否添加成功（重复任务会返回null）
+  if (!taskId) return;
 
   toast.success('文案提取任务已添加到队列', {
     action: {
@@ -123,7 +126,11 @@ const handleExtractCopy = async () => {
 };
 
 const handleRewrite = async () => {
-  if (!copyText.value || copyMode.value !== 'original') {
+  // 检查历史记录中是否有原始文案
+  const historyItem = historyStore.findById(props.currentHistoryId);
+  const originalText = historyItem?.originalText;
+  
+  if (!originalText) {
     toast.warning('请先提取文案');
     return;
   }
@@ -134,7 +141,7 @@ const handleRewrite = async () => {
   }
 
   // 创建后台任务
-  taskQueueStore.addTask({
+  const taskId = taskQueueStore.addTask({
     type: 'rewrite',
     historyId: props.currentHistoryId,
     videoInfo: JSON.parse(JSON.stringify(props.videoInfo)),
@@ -144,6 +151,9 @@ const handleRewrite = async () => {
       customPrompt: customPrompt.value
     }
   });
+
+  // 检查是否添加成功（重复任务会返回null）
+  if (!taskId) return;
 
   toast.success('文案改写任务已添加到队列', {
     action: {

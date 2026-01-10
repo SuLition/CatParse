@@ -14,8 +14,11 @@ const configStore = useConfigStore();
 const {list: historyList, loading} = storeToRefs(historyStore);
 
 // 卡片动画配置
-const cardAnimation = computed(() => configStore.appearance.cardAnimation || 'fade');
-const hasCardAnimation = computed(() => cardAnimation.value !== 'none');
+const cardAnimation = computed(() => {
+  const anim = configStore.appearance.cardAnimation || 'fade';
+  return anim === 'none' ? 'none' : `card-${anim}`;
+});
+const hasCardAnimation = computed(() => configStore.appearance.cardAnimation !== 'none');
 
 // 加载历史记录
 onMounted(async () => {
@@ -68,15 +71,48 @@ const clearAll = async () => {
     toast.success('已清空');
   }
 };
+
+// 测试用：添加模拟历史记录
+const handleAddHistory = async () => {
+  const platforms = ['douyin', 'bilibili', 'xiaohongshu'];
+  const titles = [
+    '测试视频 - 今天天气真不错',
+    '美食探店vlog - 必吃榜第一名',
+    '旅行随手拍 - 风景超美'
+  ];
+  const texts = [
+    '今天天气真的很不错，阳光明媚，微风不燥，是个出门的好日子。',
+    '这家店的招牌菜真的太好吃了！强烈推荐大家来试试！',
+    '风景超级美，随手一拍就是大片，强烈安利这个地方！'
+  ];
+
+  const randomIndex = Math.floor(Math.random() * platforms.length);
+  const randomPlatform = platforms[randomIndex];
+  const randomTitle = titles[randomIndex];
+  const randomText = texts[randomIndex];
+
+  await historyStore.add({
+    platform: randomPlatform,
+    title: `${randomTitle} #${Date.now().toString().slice(-4)}`,
+    cover: '',
+    originalText: randomText,
+    rewrittenText: '',
+    videoId: `test_${Date.now()}`,
+    originalUrl: 'https://example.com/test'
+  });
+
+  toast.success('已添加测试记录');
+};
 </script>
 
 <template>
   <div class="history-page">
     <div class="history-header">
       <h1 class="page-title">历史记录</h1>
-      <button v-if="historyList.length > 0" class="clear-button" @click="clearAll">
-        清空记录
-      </button>
+      <div class="header-actions">
+        <button v-if="historyList.length > 0" class="clear-button" @click="clearAll">清空记录</button>
+        <button class="clear-button" @click="handleAddHistory">添加历史</button>
+      </div>
     </div>
 
     <!-- 加载中 -->
@@ -93,16 +129,17 @@ const clearAll = async () => {
           <!-- 本地音频图标 -->
           <div v-else-if="item.platform === 'local' && item.localType === 'audio'" class="cover-placeholder audio">
             <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              <circle cx="7" cy="18" r="2" fill="currentColor"/>
-              <circle cx="15" cy="16" r="2" fill="currentColor"/>
+              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"/>
+              <circle cx="7" cy="18" fill="currentColor" r="2"/>
+              <circle cx="15" cy="16" fill="currentColor" r="2"/>
             </svg>
           </div>
           <!-- 本地文案图标 -->
           <div v-else-if="item.platform === 'local' && item.localType === 'text'" class="cover-placeholder text">
             <svg fill="none" viewBox="0 0 24 24">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
               <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
             </svg>
           </div>
@@ -162,16 +199,17 @@ const clearAll = async () => {
           <!-- 本地音频图标 -->
           <div v-else-if="item.platform === 'local' && item.localType === 'audio'" class="cover-placeholder audio">
             <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              <circle cx="7" cy="18" r="2" fill="currentColor"/>
-              <circle cx="15" cy="16" r="2" fill="currentColor"/>
+              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"/>
+              <circle cx="7" cy="18" fill="currentColor" r="2"/>
+              <circle cx="15" cy="16" fill="currentColor" r="2"/>
             </svg>
           </div>
           <!-- 本地文案图标 -->
           <div v-else-if="item.platform === 'local' && item.localType === 'text'" class="cover-placeholder text">
             <svg fill="none" viewBox="0 0 24 24">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
               <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
             </svg>
           </div>
@@ -244,6 +282,7 @@ const clearAll = async () => {
   flex-direction: column;
   padding: 40px;
   overflow-y: scroll;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -252,6 +291,11 @@ const clearAll = async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .page-title {
@@ -319,7 +363,6 @@ const clearAll = async () => {
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 16px;
-  transition: all var(--transition-normal) var(--easing-ease);
 }
 
 .history-card:hover {
@@ -525,14 +568,4 @@ const clearAll = async () => {
   color: #ffffff;
 }
 
-/* TransitionGroup 离开动画定位（仅对列表内卡片生效） */
-.history-list > .fade-leave-active,
-.history-list > .slide-left-leave-active,
-.history-list > .slide-right-leave-active,
-.history-list > .slide-up-leave-active,
-.history-list > .zoom-leave-active {
-  position: absolute;
-  left: 0;
-  right: 0;
-}
 </style>

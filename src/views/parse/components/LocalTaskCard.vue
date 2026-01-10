@@ -31,7 +31,6 @@
       <AudioPlayer
           v-else
           :src="audioUrl"
-          :show-time-before-progress="true"
       />
     </div>
 
@@ -172,7 +171,7 @@ onUnmounted(() => {
 
 .audio-section {
   padding: 12px 16px;
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   border-radius: 12px;
 }
 

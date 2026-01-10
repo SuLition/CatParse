@@ -19,10 +19,10 @@ export const ANIMATION_SPEED_OPTIONS = Object.entries(ANIMATION_SPEED_MODES).map
 
 // 基础过渡时间配置（毫秒，便于 calc 计算）
 export const TRANSITION_DURATION = {
-    fastest: 150,    // 最快：微小交互反馈
-    fast: 200,       // 快速：按钮、开关等小元素
-    normal: 300,     // 标准：通用过渡效果
-    slow: 400,       // 慢速：复杂元素过渡
+    fastest: 300,    // 最快：微小交互反馈
+    fast: 400,       // 快速：按钮、开关等小元素
+    normal: 500,     // 标准：通用过渡效果
+    slow: 600,       // 慢速：复杂元素过渡
 }
 
 // 基础动画时间配置（毫秒）
@@ -52,7 +52,7 @@ export const EASING = {
     easeOut: 'ease-out',
     easeInOut: 'ease-in-out',
     smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',  // Material Design
-    bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',  // 轻微弹跳
+    bounce: 'cubic-bezier(0.8, -0.4, 0.5, 1)',  // 轻微弹跳
 }
 
 /**

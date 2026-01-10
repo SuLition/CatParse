@@ -170,11 +170,24 @@ export const useHistoryStore = defineStore('history', {
       const index = this.list.findIndex(item => item.id === id)
       if (index === -1) return false
 
-      this.list[index] = { 
+      const updatedRecord = { 
         ...this.list[index], 
         ...updates,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        // 更新显示时间
+        createTime: new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).replace(/\//g, '-')
       }
+      
+      // 移除原位置，插入到列表开头（按最新时间排序）
+      this.list.splice(index, 1)
+      this.list.unshift(updatedRecord)
+      
       return await this._save()
     },
 

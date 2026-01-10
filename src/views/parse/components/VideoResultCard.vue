@@ -45,7 +45,7 @@ const handleDownload = () => {
   const fileName = (props.videoInfo.title || 'video').replace(/[\\/:*?"<>|]/g, '_');
 
   // 添加到任务队列
-  taskQueueStore.addTask({
+  const taskId = taskQueueStore.addTask({
     type: TASK_TYPE.DOWNLOAD,
     historyId: props.videoInfo.historyId || null,
     videoInfo: props.videoInfo,
@@ -58,6 +58,9 @@ const handleDownload = () => {
       }
     }
   });
+
+  // 检查是否添加成功（重复任务会返回null）
+  if (!taskId) return;
 
   toast.success('下载任务已添加到队列');
 };
