@@ -149,10 +149,11 @@ const formatTime = (timestamp) => {
   });
 };
 
-// 测试用：添加模拟任务
+// 测试用：添加模拟任务（仅用于 UI 测试，不会真正执行）
 const handlePushTask = () => {
   const types = [TASK_TYPE.EXTRACT, TASK_TYPE.REWRITE, TASK_TYPE.DOWNLOAD];
   const platforms = ['douyin', 'bilibili', 'xiaohongshu'];
+  const statuses = [TASK_STATUS.QUEUED, TASK_STATUS.SUCCESS, TASK_STATUS.ERROR];
   const titles = [
     '测试视频 - 今天天气真不错',
     '美食探店vlog',
@@ -162,18 +163,27 @@ const handlePushTask = () => {
   const randomType = types[Math.floor(Math.random() * types.length)];
   const randomPlatform = platforms[Math.floor(Math.random() * platforms.length)];
   const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
 
-  taskQueueStore.addTask({
+  // 直接添加到任务列表，不触发执行逻辑
+  const mockTask = {
+    id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     type: randomType,
-    historyId: Date.now(), // 模拟 historyId
-    platform: randomPlatform,
-    title: `${randomTitle} #${Date.now().toString().slice(-4)}`,
+    historyId: null,
     cover: '',
-    videoInfo: {
-      platform: randomPlatform,
-      title: randomTitle
-    }
-  });
+    title: `${randomTitle} #${Date.now().toString().slice(-4)}`,
+    platform: randomPlatform,
+    videoInfo: {},
+    params: {},
+    data: {},
+    status: randomStatus,
+    error: randomStatus === TASK_STATUS.ERROR ? '模拟错误信息' : null,
+    createdAt: Date.now(),
+    progress: randomStatus === TASK_STATUS.SUCCESS ? 100 : 0,
+    progressText: ''
+  };
+
+  tasks.value.unshift(mockTask);
 };
 
 const handleRemoveLatestTask = () => {

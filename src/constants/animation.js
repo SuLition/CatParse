@@ -8,7 +8,7 @@ export const ANIMATION_SPEED_MODES = {
     disabled: {value: 0.0, label: '禁用动画'},
     fast: {value: 0.3, label: '快速'},
     normal: {value: 0.5, label: '标准'},
-    elegant: {value: 1.0, label: '优雅'}
+    elegant: {value: 0.7, label: '优雅'}
 }
 
 // 速率选项（用于设置页选择）

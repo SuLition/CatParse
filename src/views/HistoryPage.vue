@@ -100,17 +100,12 @@ const handleAddHistory = async () => {
     videoId: `test_${Date.now()}`,
     originalUrl: 'https://example.com/test'
   });
-
-  toast.success('已添加测试记录');
 };
 
 // 测试用：移除模拟历史记录
 const handleRemoveLatestHistory = async () => {
   if (historyList.value.length > 0) {
     await historyStore.delete(historyList.value[0].id);
-    toast.success('已移除最新记录');
-  } else {
-    toast.warning('暂无记录可移除');
   }
 };
 </script>
