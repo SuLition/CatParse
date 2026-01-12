@@ -1,5 +1,26 @@
 # 更新日志
 
+## v0.3.0
+
+### 新功能
+
+- **SVG 路径绘制动画**：空状态页面猫咪图标使用 motion-v 实现描边绘制和填充动画
+- **开发模式功能隔离**：测试按钮仅在开发模式下显示，生产环境自动隐藏
+
+### 优化
+
+- **动画库统一**：全面使用 motion-v 作为动画库，替代原有方案
+- **CI/CD 工作流优化**：Release 工作流仅构建 Windows 版本，加快发布速度
+- **代码质量**：修复 Rust Clippy 警告和格式化问题
+
+### 修复
+
+- 修复 Rust `clippy::useless_vec` 警告（backend.rs）
+- 修复 Rust `clippy::needless_borrows_for_generic_args` 警告（audio.rs）
+- 修复 Rust 代码格式化问题（main.rs 缩进）
+
+---
+
 ## v0.2.9
 
 ### 新功能

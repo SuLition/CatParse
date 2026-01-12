@@ -53,6 +53,7 @@
 | 状态管理 | Pinia |
 | 路由 | Vue Router 4 |
 | UI 组件 | Arco Design Vue |
+| 动画库 | motion-v |
 | 通知 | vue-sonner |
 | 后端服务 | Python FastAPI (parser-service) |
 | AI 模型 | 豆包、DeepSeek、通义千问、混元 |
