@@ -87,7 +87,7 @@ fn start_prod_backend(
     resource_dir: &std::path::Path,
 ) -> Result<(), String> {
     // 尝试多个可能的路径
-    let possible_paths = vec![
+    let possible_paths = [
         exe_dir.join("binaries").join("backend_server.exe"),
         resource_dir.join("binaries").join("backend_server.exe"),
         resource_dir.join("backend_server.exe"),
