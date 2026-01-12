@@ -68,7 +68,7 @@ export const detectPlatform = (text) => {
     { platform: 'bilibili', patterns: [
       /bilibili\.com/i,
       /b23\.tv/i,
-      /BV[a-zA-Z0-9]+/i
+      /BV[a-zA-Z0-9]{10,12}/
     ]},
     // 抖音
     { platform: 'douyin', patterns: [

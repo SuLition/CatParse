@@ -9,7 +9,7 @@ import { PLATFORM_NAMES, PLATFORM_COLORS } from '@/constants/platforms'
  * 平台检测正则表达式
  */
 const PLATFORM_PATTERNS = {
-  bilibili: /bilibili\.com|b23\.tv|bili/i,
+  bilibili: /bilibili\.com|b23\.tv/i,
   douyin: /douyin\.com|iesdouyin\.com|v\.douyin/i,
   xiaohongshu: /xiaohongshu\.com|xhslink\.com|小红书/i,
   kuaishou: /kuaishou\.com|v\.kuaishou/i
