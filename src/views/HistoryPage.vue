@@ -4,6 +4,8 @@ import {useRouter} from 'vue-router';
 import {useHistoryStore, useConfigStore} from '@/stores';
 import {storeToRefs} from 'pinia';
 import {getPlatformName, getPlatformColor} from '@/constants/platforms';
+import {getCardAnimation} from '@/constants/motionAnimations';
+import {Motion, AnimatePresence} from 'motion-v';
 import {toast} from 'vue-sonner';
 
 const router = useRouter();
@@ -14,11 +16,10 @@ const configStore = useConfigStore();
 const {list: historyList, loading} = storeToRefs(historyStore);
 
 // 卡片动画配置
-const cardAnimation = computed(() => {
+const currentAnimation = computed(() => {
   const anim = configStore.appearance.cardAnimation || 'fade';
-  return anim === 'none' ? 'none' : `card-${anim}`;
+  return getCardAnimation(anim);
 });
-const hasCardAnimation = computed(() => configStore.appearance.cardAnimation !== 'none');
 
 // 加载历史记录
 onMounted(async () => {
@@ -111,7 +112,7 @@ const handleAddHistory = async () => {
       <h1 class="page-title">历史记录</h1>
       <div class="header-actions">
         <button v-if="historyList.length > 0" class="clear-button" @click="clearAll">清空记录</button>
-        <!--        <button class="clear-button" @click="handleAddHistory">添加历史</button>-->
+        <button class="clear-button" @click="handleAddHistory">添加历史</button>
       </div>
     </div>
 
@@ -121,144 +122,86 @@ const handleAddHistory = async () => {
     </div>
 
     <!-- 历史列表 -->
-    <TransitionGroup v-if="hasCardAnimation && !loading" :name="cardAnimation" class="history-list" tag="div">
-      <div v-for="item in historyList" :key="item.id" class="history-card">
-        <!-- 左侧封面图 -->
-        <div class="card-cover">
-          <img v-if="item.cover" :alt="item.title" :src="item.cover"/>
-          <!-- 本地音频图标 -->
-          <div v-else-if="item.platform === 'local' && item.localType === 'audio'" class="cover-placeholder audio">
-            <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="2"/>
-              <circle cx="7" cy="18" fill="currentColor" r="2"/>
-              <circle cx="15" cy="16" fill="currentColor" r="2"/>
-            </svg>
-          </div>
-          <!-- 本地文案图标 -->
-          <div v-else-if="item.platform === 'local' && item.localType === 'text'" class="cover-placeholder text">
-            <svg fill="none" viewBox="0 0 24 24">
-              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
-              <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 默认占位图 -->
-          <div v-else class="cover-placeholder">
-            <svg fill="none" viewBox="0 0 24 24">
-              <path
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 平台标签 -->
-          <span :style="{ background: getPlatformColor(item.platform) }" class="platform-badge">
+    <div v-if="!loading" class="history-list">
+      <AnimatePresence mode="popLayout">
+        <Motion
+            v-for="item in historyList"
+            :key="item.id"
+            :animate="currentAnimation?.animate"
+            :exit="currentAnimation?.exit"
+            :initial="currentAnimation?.initial"
+            :transition="currentAnimation?.transition"
+            as="div"
+            class="history-card"
+            layout
+        >
+          <!-- 左侧封面图 -->
+          <div class="card-cover">
+            <img v-if="item.cover" :alt="item.title" :src="item.cover"/>
+            <!-- 本地音频图标 -->
+            <div v-else-if="item.platform === 'local' && item.localType === 'audio'" class="cover-placeholder audio">
+              <svg fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="2"/>
+                <circle cx="7" cy="18" fill="currentColor" r="2"/>
+                <circle cx="15" cy="16" fill="currentColor" r="2"/>
+              </svg>
+            </div>
+            <!-- 本地文案图标 -->
+            <div v-else-if="item.platform === 'local' && item.localType === 'text'" class="cover-placeholder text">
+              <svg fill="none" viewBox="0 0 24 24">
+                <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
+                <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- 默认占位图 -->
+            <div v-else class="cover-placeholder">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- 平台标签 -->
+            <span :style="{ background: getPlatformColor(item.platform) }" class="platform-badge">
             {{ getPlatformName(item.platform, item.localType) }}
           </span>
-        </div>
-
-        <!-- 右侧内容 -->
-        <div class="card-content">
-          <!-- 标题 -->
-          <h3 class="card-title">{{ item.title }}</h3>
-
-          <!-- 文案区域（带悬浮复制按钮） -->
-          <div class="card-text-wrapper">
-            <p class="card-text">{{ getDisplayText(item) }}</p>
-            <button v-if="hasText(item)" class="copy-btn" title="复制文案" @click="handleCopy(item)">
-              <svg fill="none" viewBox="0 0 24 24">
-                <rect height="13" rx="2" stroke="currentColor" stroke-width="2" width="13" x="9" y="9"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
           </div>
 
-          <!-- 底部操作 -->
-          <div class="card-footer">
-            <span class="create-time">{{ item.createTime }}</span>
-            <div class="card-actions">
-              <button class="action-btn primary" @click="handleViewRecord(item)">查看记录</button>
-              <button class="action-btn danger" title="删除" @click="handleDelete(item.id)">
-                <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
-                  <path
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+          <!-- 右侧内容 -->
+          <div class="card-content">
+            <!-- 标题 -->
+            <h3 class="card-title">{{ item.title }}</h3>
+
+            <!-- 文案区域（带悬浮复制按钮） -->
+            <div class="card-text-wrapper">
+              <p class="card-text">{{ getDisplayText(item) }}</p>
+              <button v-if="hasText(item)" class="copy-btn" title="复制文案" @click="handleCopy(item)">
+                <svg fill="none" viewBox="0 0 24 24">
+                  <rect height="13" rx="2" stroke="currentColor" stroke-width="2" width="13" x="9" y="9"/>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
                 </svg>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-    </TransitionGroup>
-    <!-- 无动画版本 -->
-    <div v-else-if="!loading" class="history-list">
-      <div v-for="item in historyList" :key="item.id" class="history-card">
-        <!-- 左侧封面图 -->
-        <div class="card-cover">
-          <img v-if="item.cover" :alt="item.title" :src="item.cover"/>
-          <!-- 本地音频图标 -->
-          <div v-else-if="item.platform === 'local' && item.localType === 'audio'" class="cover-placeholder audio">
-            <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="2"/>
-              <circle cx="7" cy="18" fill="currentColor" r="2"/>
-              <circle cx="15" cy="16" fill="currentColor" r="2"/>
-            </svg>
-          </div>
-          <!-- 本地文案图标 -->
-          <div v-else-if="item.platform === 'local' && item.localType === 'text'" class="cover-placeholder text">
-            <svg fill="none" viewBox="0 0 24 24">
-              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
-              <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 默认占位图 -->
-          <div v-else class="cover-placeholder">
-            <svg fill="none" viewBox="0 0 24 24">
-              <path
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 平台标签 -->
-          <span :style="{ background: getPlatformColor(item.platform) }" class="platform-badge">
-            {{ getPlatformName(item.platform, item.localType) }}
-          </span>
-        </div>
 
-        <!-- 右侧内容 -->
-        <div class="card-content">
-          <!-- 标题 -->
-          <h3 class="card-title">{{ item.title }}</h3>
-
-          <!-- 文案区域（带悬浮复制按钮） -->
-          <div class="card-text-wrapper">
-            <p class="card-text">{{ getDisplayText(item) }}</p>
-            <button v-if="hasText(item)" class="copy-btn" title="复制文案" @click="handleCopy(item)">
-              <svg fill="none" viewBox="0 0 24 24">
-                <rect height="13" rx="2" stroke="currentColor" stroke-width="2" width="13" x="9" y="9"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- 底部操作 -->
-          <div class="card-footer">
-            <span class="create-time">{{ item.createTime }}</span>
-            <div class="card-actions">
-              <button class="action-btn primary" @click="handleViewRecord(item)">查看记录</button>
-              <button class="action-btn danger" title="删除" @click="handleDelete(item.id)">
-                <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
-                  <path
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                </svg>
-              </button>
+            <!-- 底部操作 -->
+            <div class="card-footer">
+              <span class="create-time">{{ item.createTime }}</span>
+              <div class="card-actions">
+                <button class="action-btn primary" @click="handleViewRecord(item)">查看记录</button>
+                <button class="action-btn danger" title="删除" @click="handleDelete(item.id)">
+                  <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+                    <path
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </Motion>
+      </AnimatePresence>
     </div>
     <!-- 空状态 -->
     <div v-if="!loading && historyList.length === 0" class="empty-state">

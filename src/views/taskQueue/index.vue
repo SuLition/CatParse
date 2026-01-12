@@ -3,6 +3,8 @@ import {computed, ref} from 'vue';
 import {useTaskQueueStore, useConfigStore, TASK_STATUS, TASK_TYPE} from '@/stores';
 import {storeToRefs} from 'pinia';
 import {getPlatformName, getPlatformColor} from '@/constants/platforms';
+import {getCardAnimation} from '@/constants/motionAnimations';
+import {Motion, AnimatePresence} from 'motion-v';
 import CreateAudioTaskModal from './components/CreateAudioTaskModal.vue';
 import CreateTextTaskModal from './components/CreateTextTaskModal.vue';
 
@@ -16,11 +18,10 @@ const taskCount = computed(() => taskQueueStore.totalCount);
 const hasActiveTasks = computed(() => taskQueueStore.hasPendingTasks);
 
 // 卡片动画配置
-const cardAnimation = computed(() => {
+const currentAnimation = computed(() => {
   const anim = configStore.appearance.cardAnimation || 'fade';
-  return anim === 'none' ? 'none' : `card-${anim}`;
+  return getCardAnimation(anim);
 });
-const hasCardAnimation = computed(() => configStore.appearance.cardAnimation !== 'none');
 
 // 创建任务下拉菜单状态
 const showCreateMenu = ref(false);
@@ -214,12 +215,12 @@ const handleRemoveLatestTask = () => {
             </div>
           </Transition>
         </div>
-        <!--        <button class="clear-button" title="添加任务" @click="handlePushTask">-->
-        <!--          添加任务-->
-        <!--        </button>-->
-        <!--        <button class="clear-button" title="添加任务" @click="handleRemoveLatestTask">-->
-        <!--          移除任务-->
-        <!--        </button>-->
+        <button class="clear-button" title="添加任务" @click="handlePushTask">
+          添加任务
+        </button>
+        <button class="clear-button" title="添加任务" @click="handleRemoveLatestTask">
+          移除任务
+        </button>
       </div>
     </div>
 
@@ -243,180 +244,105 @@ const handleRemoveLatestTask = () => {
     </div>
 
     <!-- 任务列表 -->
-    <TransitionGroup v-if="hasCardAnimation" :name="cardAnimation" class="task-list" tag="div">
-      <div v-for="task in tasks" :key="task.id" class="task-card">
-        <!-- 左侧封面图 -->
-        <div class="card-cover">
-          <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
-          <!-- 本地音频图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'"
-               class="cover-placeholder audio">
-            <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="2"/>
-              <circle cx="7" cy="18" fill="currentColor" r="2"/>
-              <circle cx="15" cy="16" fill="currentColor" r="2"/>
-            </svg>
-          </div>
-          <!-- 本地文案图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'text'" class="cover-placeholder text">
-            <svg fill="none" viewBox="0 0 24 24">
-              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
-              <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 默认占位图 -->
-          <div v-else class="cover-placeholder">
-            <svg fill="none" viewBox="0 0 24 24">
-              <path
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 平台标签 -->
-          <span :style="{ background: getPlatformColor(task.platform) }" class="platform-badge">
+    <div class="task-list">
+      <AnimatePresence mode="popLayout">
+        <Motion
+            v-for="task in tasks"
+            :key="task.id"
+            :animate="currentAnimation?.animate"
+            :exit="currentAnimation?.exit"
+            :initial="currentAnimation?.initial"
+            :transition="currentAnimation?.transition"
+            layout
+            as="div"
+            class="task-card"
+        >
+          <!-- 左侧封面图 -->
+          <div class="card-cover">
+            <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
+            <!-- 本地音频图标 -->
+            <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'"
+                 class="cover-placeholder audio">
+              <svg fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="2"/>
+                <circle cx="7" cy="18" fill="currentColor" r="2"/>
+                <circle cx="15" cy="16" fill="currentColor" r="2"/>
+              </svg>
+            </div>
+            <!-- 本地文案图标 -->
+            <div v-else-if="task.platform === 'local' && task.data?.localType === 'text'"
+                 class="cover-placeholder text">
+              <svg fill="none" viewBox="0 0 24 24">
+                <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
+                <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- 默认占位图 -->
+            <div v-else class="cover-placeholder">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+              </svg>
+            </div>
+            <!-- 平台标签 -->
+            <span :style="{ background: getPlatformColor(task.platform) }" class="platform-badge">
             {{ getPlatformName(task.platform, task.data?.localType) }}
           </span>
-        </div>
+          </div>
 
-        <!-- 右侧内容 -->
-        <div class="card-content">
-          <!-- 上部信息 -->
-          <div class="card-top">
-            <!-- 标题行 -->
-            <div class="card-header">
-              <h3 class="card-title">{{ task.title }}</h3>
-              <button class="remove-btn" title="移除任务" @click="handleRemoveTask(task.id)">
+          <!-- 右侧内容 -->
+          <div class="card-content">
+            <!-- 上部信息 -->
+            <div class="card-top">
+              <!-- 标题行 -->
+              <div class="card-header">
+                <h3 class="card-title">{{ task.title }}</h3>
+                <button class="remove-btn" title="移除任务" @click="handleRemoveTask(task.id)">
+                  <svg fill="none" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- 任务时间 -->
+              <!--            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>-->
+              <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>
+            </div>
+
+            <!-- 任务进度 -->
+            <div class="task-row">
+              <span :class="['task-type-tag', getTypeClass(task.type)]">{{ getTypeText(task.type) }}</span>
+              <div class="progress-wrapper">
+                <div class="progress-track">
+                  <div
+                      :class="getStatusClass(task.status)"
+                      :style="getProgressStyle(task)"
+                      class="progress-fill"
+                  ></div>
+                </div>
+              </div>
+              <span :class="getStatusClass(task.status)" class="task-status">
+              {{ getDisplayStatus(task) }}
+            </span>
+              <button
+                  v-if="showRetryButton(task.status)"
+                  class="retry-btn"
+                  title="重试"
+                  @click="handleRetry(task.id)"
+              >
                 <svg fill="none" viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                  <path
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                 </svg>
               </button>
             </div>
-
-            <!-- 任务时间 -->
-            <!--            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>-->
-            <div class="task-time">添加时间: {{ cardAnimation }}</div>
           </div>
-
-          <!-- 任务进度 -->
-          <div class="task-row">
-            <span :class="['task-type-tag', getTypeClass(task.type)]">{{ getTypeText(task.type) }}</span>
-            <div class="progress-wrapper">
-              <div class="progress-track">
-                <div
-                    :class="getStatusClass(task.status)"
-                    :style="getProgressStyle(task)"
-                    class="progress-fill"
-                ></div>
-              </div>
-            </div>
-            <span :class="getStatusClass(task.status)" class="task-status">
-              {{ getDisplayStatus(task) }}
-            </span>
-            <button
-                v-if="showRetryButton(task.status)"
-                class="retry-btn"
-                title="重试"
-                @click="handleRetry(task.id)"
-            >
-              <svg fill="none" viewBox="0 0 24 24">
-                <path
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </TransitionGroup>
-
-    <!-- 无动画版本 -->
-    <div v-else class="task-list">
-      <div v-for="task in tasks" :key="task.id" class="task-card">
-        <!-- 左侧封面图 -->
-        <div class="card-cover">
-          <img v-if="task.cover" :alt="task.title" :src="task.cover"/>
-          <!-- 本地音频图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'audio'"
-               class="cover-placeholder audio">
-            <svg fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" opacity="0.3" r="10" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M9 18V7l8-2v11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                    stroke-width="2"/>
-              <circle cx="7" cy="18" fill="currentColor" r="2"/>
-              <circle cx="15" cy="16" fill="currentColor" r="2"/>
-            </svg>
-          </div>
-          <!-- 本地文案图标 -->
-          <div v-else-if="task.platform === 'local' && task.data?.localType === 'text'" class="cover-placeholder text">
-            <svg fill="none" viewBox="0 0 24 24">
-              <rect height="18" opacity="0.3" rx="2" stroke="currentColor" stroke-width="1.5" width="16" x="4" y="3"/>
-              <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 默认占位图 -->
-          <div v-else class="cover-placeholder">
-            <svg fill="none" viewBox="0 0 24 24">
-              <path
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            </svg>
-          </div>
-          <!-- 平台标签 -->
-          <span :style="{ background: getPlatformColor(task.platform) }" class="platform-badge">
-            {{ getPlatformName(task.platform, task.data?.localType) }}
-          </span>
-        </div>
-
-        <!-- 右侧内容 -->
-        <div class="card-content">
-          <!-- 上部信息 -->
-          <div class="card-top">
-            <!-- 标题行 -->
-            <div class="card-header">
-              <h3 class="card-title">{{ task.title }}</h3>
-              <button class="remove-btn" title="移除任务" @click="handleRemoveTask(task.id)">
-                <svg fill="none" viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- 任务时间 -->
-            <div class="task-time">添加时间: {{ formatTime(task.createdAt) }}</div>
-          </div>
-
-          <!-- 任务进度 -->
-          <div class="task-row">
-            <span :class="['task-type-tag', getTypeClass(task.type)]">{{ getTypeText(task.type) }}</span>
-            <div class="progress-wrapper">
-              <div class="progress-track">
-                <div
-                    :class="getStatusClass(task.status)"
-                    :style="getProgressStyle(task)"
-                    class="progress-fill"
-                ></div>
-              </div>
-            </div>
-            <span :class="getStatusClass(task.status)" class="task-status">
-              {{ getDisplayStatus(task) }}
-            </span>
-            <button
-                v-if="showRetryButton(task.status)"
-                class="retry-btn"
-                title="重试"
-                @click="handleRetry(task.id)"
-            >
-              <svg fill="none" viewBox="0 0 24 24">
-                <path
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+        </Motion>
+      </AnimatePresence>
     </div>
 
     <!-- 音频任务弹窗 -->
