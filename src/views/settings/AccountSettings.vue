@@ -9,6 +9,11 @@ import {
   loadBilibiliAuth,
   clearBilibiliAuth
 } from '@/services/auth/bilibiliAuth.js'
+import {
+  loadXhsAuth,
+  clearXhsAuth,
+  performLogin as performXhsLogin
+} from '@/services/auth/xiaohongshuAuth.js'
 
 // B站登录状态
 const bilibiliLoginState = reactive({
@@ -20,6 +25,14 @@ const bilibiliLoginState = reactive({
   userInfo: null,
   pollTimer: null,
   loadingUserInfo: false
+})
+
+// 小红书登录状态
+const xhsLoginState = reactive({
+  isLoggedIn: false,
+  status: 'idle', // idle | loading | success | error
+  statusText: '',
+  cookiePreview: ''
 })
 
 // 加载B站登录状态
@@ -139,8 +152,66 @@ const refreshQRCode = () => {
   startBilibiliLogin()
 }
 
+// 加载小红书登录状态
+const loadXhsLoginState = async () => {
+  const auth = await loadXhsAuth()
+  if (auth && auth.cookie) {
+    xhsLoginState.isLoggedIn = true
+    xhsLoginState.status = 'success'
+    xhsLoginState.statusText = '已登录'
+    // 显示 Cookie 预览（截取前30字符）
+    xhsLoginState.cookiePreview = auth.cookie.length > 30 
+      ? auth.cookie.substring(0, 30) + '...' 
+      : auth.cookie
+  } else {
+    xhsLoginState.isLoggedIn = false
+    xhsLoginState.status = 'idle'
+    xhsLoginState.statusText = ''
+    xhsLoginState.cookiePreview = ''
+  }
+}
+
+// 开始小红书登录
+const startXhsLogin = async () => {
+  try {
+    xhsLoginState.status = 'loading'
+    xhsLoginState.statusText = '正在打开登录窗口...'
+    
+    const result = await performXhsLogin()
+    
+    if (result.success) {
+      xhsLoginState.isLoggedIn = true
+      xhsLoginState.status = 'success'
+      xhsLoginState.statusText = '登录成功'
+      toast.success('小红书登录成功')
+      // 重新加载状态以获取 Cookie 预览
+      await loadXhsLoginState()
+    } else {
+      xhsLoginState.status = 'error'
+      xhsLoginState.statusText = result.message
+      toast.error(result.message || '登录失败')
+    }
+  } catch (error) {
+    console.error('小红书登录失败:', error)
+    xhsLoginState.status = 'error'
+    xhsLoginState.statusText = '登录失败'
+    toast.error('登录失败: ' + error.toString())
+  }
+}
+
+// 退出小红书登录
+const logoutXhs = async () => {
+  await clearXhsAuth()
+  xhsLoginState.isLoggedIn = false
+  xhsLoginState.status = 'idle'
+  xhsLoginState.statusText = ''
+  xhsLoginState.cookiePreview = ''
+  toast.success('已退出小红书登录')
+}
+
 onMounted(() => {
   loadBilibiliLoginState()
+  loadXhsLoginState()
 })
 
 onUnmounted(() => {
@@ -199,6 +270,41 @@ onUnmounted(() => {
         </template>
       </div>
     </div>
+
+    <!-- 小红书登录卡片 -->
+    <div class="account-card xiaohongshu">
+      <div class="account-header">
+        <svg class="account-icon xhs" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span class="account-name">小红书</span>
+        <span :class="['status-badge', { active: xhsLoginState.isLoggedIn }]">
+          {{ xhsLoginState.isLoggedIn ? '已登录' : '未登录' }}
+        </span>
+      </div>
+      <p class="account-desc">登录后可解析小红书视频/图文笔记</p>
+      <div class="account-content">
+        <template v-if="xhsLoginState.isLoggedIn">
+          <div class="user-info">
+            <div class="xhs-cookie-info">
+              <span class="cookie-label">Cookie 已配置</span>
+              <span class="cookie-preview">{{ xhsLoginState.cookiePreview }}</span>
+            </div>
+          </div>
+          <button class="btn btn-outline-danger" @click="logoutXhs">退出登录</button>
+        </template>
+        <template v-else>
+          <div v-if="xhsLoginState.status === 'loading'" class="login-loading">
+            <div class="loading-spinner xhs"></div>
+            <span>{{ xhsLoginState.statusText }}</span>
+          </div>
+          <button v-else :disabled="xhsLoginState.status === 'loading'" class="btn btn-xhs"
+                  @click="startXhsLogin">
+            <span>打开登录窗口</span>
+          </button>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -217,6 +323,12 @@ onUnmounted(() => {
   border-color: rgba(251, 114, 153, 0.2);
 }
 
+.account-card.xiaohongshu {
+  background: linear-gradient(135deg, rgba(255, 45, 85, 0.08) 0%, rgba(255, 100, 100, 0.08) 100%);
+  border-color: rgba(255, 45, 85, 0.2);
+  margin-top: 16px;
+}
+
 .account-header {
   display: flex;
   align-items: center;
@@ -228,6 +340,10 @@ onUnmounted(() => {
   width: 24px;
   height: 24px;
   color: #fb7299;
+}
+
+.account-icon.xhs {
+  color: #ff2d55;
 }
 
 .account-name {
@@ -412,6 +528,53 @@ onUnmounted(() => {
 
 .btn-text:hover {
   text-decoration: underline;
+}
+
+.btn-xhs {
+  background: linear-gradient(135deg, #ff2d55 0%, #ff6464 100%);
+  color: white;
+  padding: 10px 24px;
+}
+
+.btn-xhs:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(255, 45, 85, 0.4);
+}
+
+.btn-xhs:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 小红书 Cookie 信息 */
+.xhs-cookie-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cookie-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cookie-preview {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: monospace;
+}
+
+.login-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.loading-spinner.xhs {
+  border-top-color: #ff2d55;
 }
 
 /* 动画 */

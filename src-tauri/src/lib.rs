@@ -17,8 +17,8 @@ use tauri::{Emitter, Manager};
 // 重新导出模块中的命令和函数
 use backend::{start_backend, start_backend_service, stop_backend, stop_backend_service};
 use commands::{
-    clear_folder, download_file, extract_audio, fetch_data, get_download_dir, get_file_stat,
-    get_folder_size, open_folder, resolve_redirect,
+    check_xhs_cookie, clear_folder, download_file, extract_audio, fetch_data, get_download_dir,
+    get_file_stat, get_folder_size, open_folder, open_xhs_login, resolve_redirect,
 };
 use tray::{get_close_action, set_close_action};
 use window::set_window_effect;
@@ -132,7 +132,9 @@ pub fn run() {
             start_backend,
             stop_backend,
             set_window_effect,
-            set_close_action
+            set_close_action,
+            open_xhs_login,
+            check_xhs_cookie
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

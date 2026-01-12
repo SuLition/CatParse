@@ -10,6 +10,7 @@ import { appDataDir } from '@tauri-apps/api/path'
 export const FILE_NAMES = {
   CONFIG: 'config.json',
   BILIBILI_AUTH: 'bilibili_auth.json',
+  XHS_AUTH: 'xhs_auth.json',
   DOWNLOAD_HISTORY: 'download_history.json',
   PARSE_HISTORY: 'parse_history.json'
 }
