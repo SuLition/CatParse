@@ -305,8 +305,30 @@ async def extract_audio(request: ExtractAudioRequest):
     video_url = request.video_url
     platform = request.platform
 
-    # 检查 FFmpeg 是否可用
-    ffmpeg_path = shutil.which("ffmpeg")
+    # 查找 FFmpeg - 优先使用打包目录中的 FFmpeg
+    ffmpeg_path = None
+    
+    # 1. 检查打包环境 (PyInstaller)
+    if getattr(sys, "frozen", False):
+        # 打包环境: FFmpeg 在 _internal 目录
+        bundled_ffmpeg = os.path.join(sys._MEIPASS, "ffmpeg.exe")
+        if os.path.exists(bundled_ffmpeg):
+            ffmpeg_path = bundled_ffmpeg
+            print(f"[FFmpeg] 使用打包的 FFmpeg: {ffmpeg_path}")
+    
+    # 2. 检查开发环境 (同目录)
+    if not ffmpeg_path:
+        local_ffmpeg = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ffmpeg.exe")
+        if os.path.exists(local_ffmpeg):
+            ffmpeg_path = local_ffmpeg
+            print(f"[FFmpeg] 使用本地 FFmpeg: {ffmpeg_path}")
+    
+    # 3. 检查系统 PATH
+    if not ffmpeg_path:
+        ffmpeg_path = shutil.which("ffmpeg")
+        if ffmpeg_path:
+            print(f"[FFmpeg] 使用系统 FFmpeg: {ffmpeg_path}")
+    
     if not ffmpeg_path:
         return ExtractAudioResponse(
             success=False, message="FFmpeg 未安装，无法提取音频"

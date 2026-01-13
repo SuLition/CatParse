@@ -48,18 +48,28 @@ def main():
     except ImportError:
         print("[!] py_mini_racer 未安装")
 
-    # PyInstaller 参数
+    # 检查 FFmpeg 是否存在
+    ffmpeg_path = os.path.join(current_dir, "ffmpeg.exe")
+    if os.path.exists(ffmpeg_path):
+        print(f"[OK] 找到 ffmpeg.exe: {ffmpeg_path}")
+    else:
+        print("[!] ffmpeg.exe 未找到，音频提取功能将不可用")
+        ffmpeg_path = None
+
+    # PyInstaller 参数 - 使用 onedir 模式，所有文件打包到安装目录
     pyinstaller_args = [
         sys.executable,
         "-m",
         "PyInstaller",
-        "--onefile",
+        "--onedir",  # 目录模式，所有依赖文件直接放在目录中
         "--name",
         "backend_server",
         "--console",
         "--noconfirm",
         "--add-data",
-        f"a_bogus.js{os.pathsep}.",
+        f"a_bogus.js{os.pathsep}.",  # a_bogus.js 直接放在输出目录根目录
+        "--add-binary",
+        f"ffmpeg.exe{os.pathsep}.",  # FFmpeg 用于音频提取
         "--hidden-import",
         "uvicorn.logging",
         "--hidden-import",
@@ -112,29 +122,45 @@ def main():
         print("\n[错误] 打包失败!")
         sys.exit(1)
 
-    # 检查输出
-    exe_path = os.path.join(current_dir, "dist", "backend_server.exe")
+    # 检查输出 - onedir 模式输出到 dist/backend_server/ 目录
+    output_dir = os.path.join(current_dir, "dist", "backend_server")
+    exe_path = os.path.join(output_dir, "backend_server.exe")
+    
     if os.path.exists(exe_path):
-        size_mb = os.path.getsize(exe_path) / 1024 / 1024
+        # 计算整个目录大小
+        total_size = 0
+        file_count = 0
+        for root, dirs, files in os.walk(output_dir):
+            for f in files:
+                total_size += os.path.getsize(os.path.join(root, f))
+                file_count += 1
+        size_mb = total_size / 1024 / 1024
+        
         print(f"\n[成功] 打包完成!")
-        print(f"  输出: {exe_path}")
-        print(f"  大小: {size_mb:.1f} MB")
+        print(f"  输出目录: {output_dir}")
+        print(f"  文件数量: {file_count}")
+        print(f"  总大小: {size_mb:.1f} MB")
 
-        # 复制到 Tauri 目标目录
-        tauri_target = os.path.join(current_dir, "..", "src-tauri", "binaries")
-        os.makedirs(tauri_target, exist_ok=True)
-
-        target_exe = os.path.join(tauri_target, "backend_server.exe")
-        shutil.copy2(exe_path, target_exe)
-        print(f"  已复制到: {target_exe}")
+        # 复制整个目录到 Tauri 目标目录
+        tauri_target = os.path.join(current_dir, "..", "src-tauri", "binaries", "backend_server")
+        
+        # 清理旧目录
+        if os.path.exists(tauri_target):
+            print(f"[清理] 删除旧目录: {tauri_target}")
+            shutil.rmtree(tauri_target)
+        
+        # 复制新目录
+        shutil.copytree(output_dir, tauri_target)
+        print(f"  已复制到: {tauri_target}")
     else:
         print("\n[错误] exe 文件未生成!")
+        print(f"  期望路径: {exe_path}")
         sys.exit(1)
 
     print("\n" + "=" * 60)
     print("打包完成! 下一步:")
     print("1. 运行 npm run tauri:build 构建桌面应用")
-    print("2. 确保 backend_server.exe 在应用同目录下")
+    print("2. 所有运行时文件已打包到 binaries/backend_server/ 目录")
     print("=" * 60)
 
 

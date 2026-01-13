@@ -8,6 +8,9 @@ import {getCardAnimation} from '@/constants/motionAnimations';
 import {Motion, AnimatePresence} from 'motion-v';
 import {toast} from 'vue-sonner';
 
+// 开发模式判断
+const isDev = import.meta.env.DEV;
+
 const router = useRouter();
 
 // Store
@@ -116,8 +119,8 @@ const handleRemoveLatestHistory = async () => {
       <h1 class="page-title">历史记录</h1>
       <div class="header-actions">
         <button v-if="historyList.length > 0" class="clear-button" @click="clearAll">清空记录</button>
-        <button class="clear-button" @click="handleAddHistory">添加记录</button>
-        <button class="clear-button" @click="handleRemoveLatestHistory">移除记录</button>
+        <button v-if="isDev" class="clear-button" @click="handleAddHistory">添加记录</button>
+        <button v-if="isDev" class="clear-button" @click="handleRemoveLatestHistory">移除记录</button>
       </div>
     </div>
 

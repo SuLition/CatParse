@@ -44,4 +44,9 @@ xiaohongshu.json
 
 # Tauri
 src-tauri/gen/schemas/
+src-tauri/binaries/
 /build.bat
+
+# FFmpeg 二进制文件
+parser-service/ffmpeg.exe
+parser-service/ffmpeg*.zip

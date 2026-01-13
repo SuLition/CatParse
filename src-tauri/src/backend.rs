@@ -86,8 +86,12 @@ fn start_prod_backend(
     exe_dir: &std::path::Path,
     resource_dir: &std::path::Path,
 ) -> Result<(), String> {
-    // 尝试多个可能的路径
+    // 尝试多个可能的路径 - 支持 onedir 模式的目录结构
     let possible_paths = [
+        // onedir 模式: backend_server/backend_server.exe
+        exe_dir.join("binaries").join("backend_server").join("backend_server.exe"),
+        resource_dir.join("binaries").join("backend_server").join("backend_server.exe"),
+        // 兼容旧版 onefile 模式
         exe_dir.join("binaries").join("backend_server.exe"),
         resource_dir.join("binaries").join("backend_server.exe"),
         resource_dir.join("backend_server.exe"),

@@ -56,8 +56,14 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "binaries/backend_server.exe"
-    ]
+      "binaries/backend_server/**/*"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "nsis/hooks.nsi"
+      }
+    }
   },
   "plugins": {
     "updater": {

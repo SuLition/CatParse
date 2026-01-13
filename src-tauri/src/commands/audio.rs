@@ -9,6 +9,60 @@ pub struct ExtractAudioResult {
     pub audio_path: String,
 }
 
+/// 查找 FFmpeg 可执行文件
+/// 优先级: 打包目录 > 系统 PATH
+fn find_ffmpeg(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+    // 1. 检查打包目录中的 FFmpeg (backend_server/_internal/ffmpeg.exe)
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let possible_paths = [
+                // onedir 模式: binaries/backend_server/_internal/ffmpeg.exe
+                exe_dir.join("binaries").join("backend_server").join("_internal").join("ffmpeg.exe"),
+                // 资源目录
+                exe_dir.join("_internal").join("ffmpeg.exe"),
+            ];
+            
+            for path in &possible_paths {
+                if path.exists() {
+                    println!("[FFmpeg] 找到打包的 FFmpeg: {:?}", path);
+                    return Some(path.clone());
+                }
+            }
+        }
+    }
+    
+    // 2. 检查资源目录
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let possible_paths = [
+            resource_dir.join("binaries").join("backend_server").join("_internal").join("ffmpeg.exe"),
+            resource_dir.join("backend_server").join("_internal").join("ffmpeg.exe"),
+        ];
+        
+        for path in &possible_paths {
+            if path.exists() {
+                println!("[FFmpeg] 找到资源目录的 FFmpeg: {:?}", path);
+                return Some(path.clone());
+            }
+        }
+    }
+    
+    // 3. 检查系统 PATH
+    if let Ok(output) = Command::new("where").arg("ffmpeg").output() {
+        if output.status.success() {
+            let path_str = String::from_utf8_lossy(&output.stdout);
+            if let Some(first_line) = path_str.lines().next() {
+                let path = std::path::PathBuf::from(first_line.trim());
+                if path.exists() {
+                    println!("[FFmpeg] 找到系统 FFmpeg: {:?}", path);
+                    return Some(path);
+                }
+            }
+        }
+    }
+    
+    None
+}
+
 /// 从本地视频文件提取音频
 #[tauri::command]
 pub async fn extract_audio(
@@ -41,14 +95,11 @@ pub async fn extract_audio(
     let audio_path = temp_dir.join(&audio_filename);
 
     // 查找 FFmpeg
-    let ffmpeg_cmd = if cfg!(target_os = "windows") {
-        "ffmpeg.exe"
-    } else {
-        "ffmpeg"
-    };
+    let ffmpeg_path = find_ffmpeg(&app)
+        .ok_or_else(|| "FFmpeg 未找到，无法提取音频".to_string())?;
 
     // 执行 FFmpeg 提取音频
-    let output = Command::new(ffmpeg_cmd)
+    let output = Command::new(&ffmpeg_path)
         .args([
             "-i",
             &video_path,
@@ -67,8 +118,8 @@ pub async fn extract_audio(
         .output()
         .map_err(|e| {
             format!(
-                "FFmpeg 执行失败: {}. 请确保已安装 FFmpeg 并添加到系统 PATH",
-                e
+                "FFmpeg 执行失败: {}. FFmpeg 路径: {:?}",
+                e, ffmpeg_path
             )
         })?;
 
