@@ -298,11 +298,11 @@ const handleRemoveLatestTask = () => {
             stroke-linejoin="round"
             stroke-width="33"
         />
-        <!-- 头顶羽毛 -->
+        <!-- 眼镜 -->
         <Motion
             :animate="{ pathLength: 1, opacity: 1 }"
             :initial="{ pathLength: 0, opacity: 0 }"
-            :transition="{ duration: animationDuration * 0.15, delay: animationDuration * 0.5, ease: 'linear' }"
+            :transition="{ duration: animationDuration * 0.15, delay: animationDuration * 0.7, ease: 'linear' }"
             as="path"
             d="m 336.30245,246.33336 c 0,5.06868 -3.10018,26.79171 -3.10018,26.79171"
             fill="none"

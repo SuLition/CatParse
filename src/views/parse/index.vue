@@ -95,63 +95,64 @@ onMounted(async () => {
         @parse="handleParse"
     />
 
+    <div class="parse-page-content">
+      <!-- 解析结果（网络视频） -->
+      <AnimatePresence mode="wait">
+        <Motion
+            v-if="videoInfo && !isLocalTask && currentHistoryId"
+            :key="'video-' + currentHistoryId"
+            :animate="currentAnimation?.animate"
+            :exit="currentAnimation?.exit"
+            :initial="currentAnimation?.initial"
+            :transition="currentAnimation?.transition"
+        >
+          <VideoResultCard
+              v-model:selectedQuality="selectedQuality"
+              :qualityOptions="qualityOptions"
+              :videoInfo="videoInfo"
+          />
+        </Motion>
+      </AnimatePresence>
 
-    <!-- 解析结果（网络视频） -->
-    <AnimatePresence mode="wait">
-      <Motion
-          v-if="videoInfo && !isLocalTask"
-          :key="'video-' + currentHistoryId"
-          :animate="currentAnimation?.animate"
-          :exit="currentAnimation?.exit"
-          :initial="currentAnimation?.initial"
-          :transition="currentAnimation?.transition"
-      >
-        <VideoResultCard
-            v-model:selectedQuality="selectedQuality"
-            :qualityOptions="qualityOptions"
-            :videoInfo="videoInfo"
-        />
-      </Motion>
-    </AnimatePresence>
+      <!-- 本地任务卡片 -->
+      <AnimatePresence mode="wait">
+        <Motion
+            v-if="isLocalTask && localTaskInfo"
+            :key="'local-' + currentHistoryId"
+            :animate="currentAnimation?.animate"
+            :exit="currentAnimation?.exit"
+            :initial="currentAnimation?.initial"
+            :transition="currentAnimation?.transition"
+        >
+          <LocalTaskCard :taskInfo="localTaskInfo"/>
+        </Motion>
+      </AnimatePresence>
 
-    <!-- 本地任务卡片 -->
-    <AnimatePresence mode="wait">
-      <Motion
-          v-if="isLocalTask && localTaskInfo"
-          :key="'local-' + currentHistoryId"
-          :animate="currentAnimation?.animate"
-          :exit="currentAnimation?.exit"
-          :initial="currentAnimation?.initial"
-          :transition="currentAnimation?.transition"
-      >
-        <LocalTaskCard :taskInfo="localTaskInfo"/>
-      </Motion>
-    </AnimatePresence>
+      <!-- 文案模块 -->
+      <AnimatePresence mode="wait">
+        <Motion
+            v-if="videoInfo || (isLocalTask && localTaskInfo)"
+            :key="'copy-' + currentHistoryId"
+            :animate="currentAnimation?.animate"
+            :exit="currentAnimation?.exit"
+            :initial="currentAnimation?.initial"
+            :style="{ flex: 3, minHeight: 0, display: 'flex' }"
+            :transition="{ ...currentAnimation?.transition, delay: 0.1 }"
+        >
+          <CopywritingPanel
+              :currentHistoryId="currentHistoryId"
+              :localTaskInfo="isLocalTask ? localTaskInfo : null"
+              :videoInfo="isLocalTask ? null : videoInfo"
+          />
+        </Motion>
+      </AnimatePresence>
 
-    <!-- 文案模块 -->
-    <AnimatePresence mode="wait">
-      <Motion
-          v-if="videoInfo || (isLocalTask && localTaskInfo)"
-          :key="'copy-' + currentHistoryId"
-          :animate="currentAnimation?.animate"
-          :exit="currentAnimation?.exit"
-          :initial="currentAnimation?.initial"
-          :transition="{ ...currentAnimation?.transition, delay: 0.1 }"
-          :style="{ flex: 3, minHeight: 0, display: 'flex' }"
-      >
-        <CopywritingPanel
-            :currentHistoryId="currentHistoryId"
-            :videoInfo="isLocalTask ? null : videoInfo"
-            :localTaskInfo="isLocalTask ? localTaskInfo : null"
-        />
-      </Motion>
-    </AnimatePresence>
+      <!-- 解析中状态 -->
+      <ParseLoading v-if="isParsing && !videoInfo"/>
 
-    <!-- 解析中状态 -->
-    <ParseLoading v-if="isParsing && !videoInfo"/>
-
-    <!-- 空状态 -->
-    <ParseEmpty v-if="!videoInfo && !isParsing && !isLocalTask"/>
+      <!-- 空状态 -->
+      <ParseEmpty v-if="!videoInfo && !isParsing && !isLocalTask"/>
+    </div>
   </div>
 </template>
 
@@ -163,5 +164,13 @@ onMounted(async () => {
   padding: 20px;
   gap: 16px;
   overflow: hidden;
+
+  .parse-page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+  }
 }
 </style>

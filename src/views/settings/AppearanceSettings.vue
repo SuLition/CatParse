@@ -140,21 +140,6 @@ const onCardAnimationChange = (value) => {
       <p class="setting-hint">切换页面时的动画效果</p>
     </div>
 
-    <!-- 动画速率 -->
-    <div class="setting-group">
-      <div class="setting-item">
-        <div class="setting-row">
-          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <span class="setting-label">动画速率</span>
-        </div>
-        <CustomSelect v-model="animationSpeed" :options="ANIMATION_SPEED_SELECT_OPTIONS"
-                      class="setting-select" @change="onAnimationSpeedChange"/>
-      </div>
-      <p class="setting-hint">调整应用动画的播放速度</p>
-    </div>
-
     <!-- 卡片动画 -->
     <div class="setting-group">
       <div class="setting-item">
@@ -170,6 +155,23 @@ const onCardAnimationChange = (value) => {
       </div>
       <p class="setting-hint">删除历史记录或任务时的动画效果</p>
     </div>
+
+    <!-- 动画速率 -->
+    <div class="setting-group">
+      <div class="setting-item">
+        <div class="setting-row">
+          <svg class="setting-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span class="setting-label">动画速率</span>
+        </div>
+        <CustomSelect v-model="animationSpeed" :options="ANIMATION_SPEED_SELECT_OPTIONS"
+                      class="setting-select" @change="onAnimationSpeedChange"/>
+      </div>
+      <p class="setting-hint">调整应用动画的播放速度</p>
+    </div>
+
+
   </div>
 </template>
 
