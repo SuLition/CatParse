@@ -68,6 +68,10 @@
     {
       "identifier": "fs:allow-copy-file",
       "allow": [{ "path": "$APPDATA/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$APPDATA/**" }]
     }
   ]
 }

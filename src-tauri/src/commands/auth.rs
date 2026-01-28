@@ -12,23 +12,28 @@ const XHS_LOGIN_WINDOW_ID: &str = "xhs-login";
 /// 小红书登录后的关键 Cookie
 const XHS_COOKIE_WEB_SESSION: &str = "web_session=";
 
+/// 从 Cookie 字符串中提取 web_session 的值
+fn extract_web_session(cookie_str: &str) -> Option<String> {
+    if let Some(pos) = cookie_str.find(XHS_COOKIE_WEB_SESSION) {
+        let start = pos + XHS_COOKIE_WEB_SESSION.len();
+        let rest = &cookie_str[start..];
+        let end = rest.find(';').unwrap_or(rest.len());
+        let session_value = &rest[..end];
+        if !session_value.is_empty() {
+            return Some(session_value.to_string());
+        }
+    }
+    None
+}
+
 /// 检查 Cookie 是否包含有效的登录标识
 /// 只要 web_session 存在且有值即可
 fn is_valid_login_cookie(cookie_str: &str) -> bool {
     log::info!("[XHS Auth] Cookie 内容: {}", cookie_str);
     
-    // 查找 web_session= 的位置
-    if let Some(pos) = cookie_str.find(XHS_COOKIE_WEB_SESSION) {
-        // 提取 web_session 的值
-        let start = pos + XHS_COOKIE_WEB_SESSION.len();
-        let rest = &cookie_str[start..];
-        // 找到值的结束位置（分号或字符串末尾）
-        let end = rest.find(';').unwrap_or(rest.len());
-        let session_value = &rest[..end];
-        // 只要有值就认为有效
-        let is_valid = !session_value.is_empty();
-        log::info!("[XHS Auth] web_session 值: {}, 长度: {}, 是否有效: {}", session_value, session_value.len(), is_valid);
-        is_valid
+    if let Some(session_value) = extract_web_session(cookie_str) {
+        log::info!("[XHS Auth] web_session 值: {}, 长度: {}", session_value, session_value.len());
+        true
     } else {
         log::info!("[XHS Auth] 未找到 web_session");
         false
@@ -159,6 +164,10 @@ pub async fn open_xhs_login(app: AppHandle) -> Result<String, String> {
     let result: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
     let result_clone = result.clone();
     
+    // 用于存储初始的 web_session 值，只有当值变化时才认为登录成功
+    let initial_session: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    let initial_session_clone = initial_session.clone();
+    
     // 启动定时检查 Cookie 的任务
     let window_clone = login_window.clone();
     let tx_clone = tx.clone();
@@ -170,8 +179,8 @@ pub async fn open_xhs_login(app: AppHandle) -> Result<String, String> {
         // 清除 web_session Cookie，确保检测到的是新登录产生的
         clear_cookies_from_webview(&window_clone);
         
-        // 等待页面重新加载（清除 Cookie 后页面会变为未登录状态）
-        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        // 等待 Cookie 清除和页面状态更新
+        tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
         
         log::info!("[XHS Auth] 开始检测登录 Cookie...");
         
@@ -188,14 +197,35 @@ pub async fn open_xhs_login(app: AppHandle) -> Result<String, String> {
     // 监听 Cookie 变化
     let window_for_close = login_window.clone();
     tokio::spawn(async move {
+        let mut first_check = true;
+        
         while let Some(cookie_str) = rx.recv().await {
             log::info!("[XHS Auth] 收到 Cookie, 长度: {}", cookie_str.len());
-            // 使用更严格的登录检测
-            if is_valid_login_cookie(&cookie_str) {
-                log::info!("[XHS Auth] 检测到有效登录 Cookie!");
-                *result_clone.lock().unwrap() = Some(cookie_str);
-                let _ = window_for_close.destroy();  // 强制销毁窗口
-                break;
+            
+            let current_session = extract_web_session(&cookie_str);
+            
+            // 第一次检测时记录初始值
+            if first_check {
+                first_check = false;
+                let initial_value = current_session.clone().unwrap_or_default();
+                log::info!("[XHS Auth] 记录初始 web_session: {}", initial_value);
+                *initial_session_clone.lock().unwrap() = Some(initial_value);
+                continue;
+            }
+            
+            // 检查 web_session 是否发生变化
+            if let Some(ref current) = current_session {
+                let initial = initial_session_clone.lock().unwrap();
+                let initial_value = initial.as_ref().map(|s| s.as_str()).unwrap_or("");
+                
+                // 只有当 web_session 存在且与初始值不同时，才认为登录成功
+                if !current.is_empty() && current != initial_value {
+                    log::info!("[XHS Auth] 检测到 web_session 变化: {} -> {}", initial_value, current);
+                    log::info!("[XHS Auth] 登录成功!");
+                    *result_clone.lock().unwrap() = Some(cookie_str);
+                    let _ = window_for_close.destroy();
+                    break;
+                }
             }
         }
     });
