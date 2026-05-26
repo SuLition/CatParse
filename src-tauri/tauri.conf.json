@@ -56,7 +56,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "binaries/backend_server/**/*"
+      "binaries/backend_server"
     ],
     "windows": {
       "nsis": {
